@@ -76,7 +76,11 @@ public class OrderAdminService {
     }
 
     public PayResponse queryOrder(Long id) {
-        return paymentGatewayService.queryOrder(requireOrder(id));
+        return queryOrder(id, false);
+    }
+
+    public PayResponse queryOrder(Long id, boolean force) {
+        return paymentGatewayService.queryOrder(requireOrder(id), force);
     }
 
     public PageResult<OrderLogResponse> pageLogs(long current, long size, Long orderId, String merchantOrderNo, String direction, String apiType) {
@@ -118,6 +122,7 @@ public class OrderAdminService {
                 order.getRouteRecordId(), order.getPoolId(), pool.getPoolName(), order.getAccountId(),
                 account == null ? null : account.getAccountName(),
                 account == null ? null : cryptoService.maskEncrypted(account.getApiKeyEncrypted()),
+                account == null ? null : cryptoService.decrypt(account.getApiKeyEncrypted()),
                 order.getStatus(), order.getNotifyUrl(),
                 order.getPaySuccessTime(), order.getExpiredTime(), order.getLastQueryTime(), order.getQueryCount(),
                 order.getUpstreamResponseCode(), order.getUpstreamResponseMsg(), order.getCreatedAt(), order.getUpdatedAt());

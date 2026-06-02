@@ -152,7 +152,8 @@ public final class GatewayDtos {
             String merchantRefundNo,
             @NotNull Long timestamp,
             @NotBlank String nonce,
-            @NotBlank String sign
+            @NotBlank String sign,
+            Boolean forceQuery
     ) {
     }
 

@@ -2,7 +2,8 @@
   <section class="page-panel">
     <div class="toolbar">
       <el-button @click="router.back()">返回</el-button>
-      <el-button v-if="authStore.canManageOrders" type="primary" :disabled="!order || isTerminal(order.status)" @click="manualQuery">手动查单</el-button>
+      <el-button v-if="authStore.canManageOrders" type="primary" :disabled="!order || isTerminal(order.status)" :loading="querying" @click="manualQuery">手动查单</el-button>
+      <el-button v-if="authStore.canManageOrders && order?.status === 'FAILED'" type="warning" :loading="querying" @click="forceQuery">重新查询状态</el-button>
     </div>
     <el-descriptions v-if="order" :column="2" border>
       <el-descriptions-item label="商户订单号">{{ order.merchantOrderNo }}</el-descriptions-item>
@@ -47,6 +48,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const order = ref<OrderItem | null>(null)
+const querying = ref(false)
 
 onMounted(fetchOrder)
 
@@ -56,9 +58,22 @@ async function fetchOrder() {
 }
 
 async function manualQuery() {
-  await queryOrder(Number(route.params.id))
-  ElMessage.success('查单完成')
-  await fetchOrder()
+  await runQuery(false)
+}
+
+async function forceQuery() {
+  await runQuery(true)
+}
+
+async function runQuery(force: boolean) {
+  querying.value = true
+  try {
+    await queryOrder(Number(route.params.id), force)
+    ElMessage.success(force ? '状态重新查询完成' : '查单完成')
+    await fetchOrder()
+  } finally {
+    querying.value = false
+  }
 }
 
 function isTerminal(status: string) {

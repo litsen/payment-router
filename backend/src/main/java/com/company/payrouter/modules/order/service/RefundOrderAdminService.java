@@ -57,7 +57,11 @@ public class RefundOrderAdminService {
     }
 
     public RefundResponse queryRefund(Long id) {
-        return paymentGatewayService.queryRefundOrder(requireRefund(id));
+        return queryRefund(id, false);
+    }
+
+    public RefundResponse queryRefund(Long id, boolean force) {
+        return paymentGatewayService.queryRefundOrder(requireRefund(id), force);
     }
 
     private PayRefundOrder requireRefund(Long id) {

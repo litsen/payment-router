@@ -21,7 +21,7 @@
       <el-table-column prop="channelOrderNo" label="上游订单号" min-width="150" />
       <el-table-column prop="poolName" label="商户" min-width="130" />
       <el-table-column prop="accountName" label="支付参数" min-width="150" />
-      <el-table-column prop="accountApiKeyMasked" label="APIKEY" min-width="150" />
+      <el-table-column prop="accountApiKey" label="APIKEY" min-width="170" />
       <el-table-column prop="amount" label="金额" width="100" />
       <el-table-column label="状态" width="110">
         <template #default="{ row }">

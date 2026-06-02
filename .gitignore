@@ -6,8 +6,11 @@ target/
 
 30-followup-backlog.md
 31-payment-router-current-handover-20260601.md
+32-payment-router-api-integration.md
+33-payment-router-dev-handover-20260602.md
 temp-doc/
 lfwin-payment/
+payment-router-pay-api-skill/
 
 backend/target/
 backend/src/test/

@@ -59,6 +59,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -71,6 +72,7 @@ public class PaymentGatewayService {
     private static final String STATUS_SUCCESS = "SUCCESS";
     private static final String STATUS_FAILED = "FAILED";
     private static final String STATUS_UNKNOWN = "UNKNOWN";
+    private static final DateTimeFormatter LFWIN_ORDER_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final PayOrderMapper orderMapper;
     private final PayMerchantAccountMapper accountMapper;
@@ -578,7 +580,7 @@ public class PaymentGatewayService {
         if (order == null) throw new BizException(BusinessErrorCode.ORDER_NOT_FOUND);
         PayRefundOrder refundOrder = findRefund(request.appId(), request.merchantRefundNo());
         if (refundOrder == null) throw new BizException("Refund order does not exist");
-        if (isRefundTerminal(refundOrder.getStatus())) {
+        if (isRefundTerminal(refundOrder.getStatus()) && !Boolean.TRUE.equals(request.forceQuery())) {
             touchRefundQuery(refundOrder);
             apiLogService.record(order.getId(), order.getMerchantOrderNo(), "INBOUND", "QUERY_REFUND", securityService.toParamMap(request), null, refundOrder.getStatus(), null);
             return toRefundResponse(refundOrder, refundOrder.getUpstreamRawResponse());
@@ -592,7 +594,12 @@ public class PaymentGatewayService {
 
     @Transactional
     public RefundResponse queryRefundOrder(PayRefundOrder refundOrder) {
-        if (isRefundTerminal(refundOrder.getStatus())) {
+        return queryRefundOrder(refundOrder, false);
+    }
+
+    @Transactional
+    public RefundResponse queryRefundOrder(PayRefundOrder refundOrder, boolean force) {
+        if (isRefundTerminal(refundOrder.getStatus()) && !force) {
             touchRefundQuery(refundOrder);
             return toRefundResponse(refundOrder, refundOrder.getUpstreamRawResponse());
         }
@@ -708,18 +715,33 @@ public class PaymentGatewayService {
         return Map.of(
                 "service", "pay.comm.query_order",
                 "mch_orderid", order.getMerchantOrderNo(),
-                "orderid", order.getPlatformOrderNo() == null ? "" : order.getPlatformOrderNo()
+                "order_time", resolveQueryOrderTime(order)
         );
+    }
+
+    private String resolveQueryOrderTime(PayOrder order) {
+        if (StringUtils.hasText(order.getUpstreamOrderTime())) {
+            return order.getUpstreamOrderTime();
+        }
+        if (order.getCreatedAt() != null) {
+            return order.getCreatedAt().format(LFWIN_ORDER_TIME_FORMATTER);
+        }
+        return "";
     }
 
     @Transactional
     public PayResponse queryOrder(PayOrder order) {
-        if (isTerminal(order.getStatus()) || order.getAccountId() == null) {
+        return queryOrder(order, false);
+    }
+
+    @Transactional
+    public PayResponse queryOrder(PayOrder order, boolean force) {
+        if ((isTerminal(order.getStatus()) && !force) || order.getAccountId() == null) {
             return toResponse(order);
         }
         PayMerchantAccount account = requireAccount(order.getAccountId());
         ChannelResponse channelResponse = channelAdapter.queryPay(
-                new QueryChannelRequest(order.getMerchantOrderNo(), order.getPlatformOrderNo(), order.getUpstreamOrderTime()),
+                new QueryChannelRequest(order.getMerchantOrderNo(), order.getPlatformOrderNo(), resolveQueryOrderTime(order)),
                 context(account)
         );
         order.setLastQueryTime(LocalDateTime.now());

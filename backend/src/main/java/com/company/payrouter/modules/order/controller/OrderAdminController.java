@@ -44,8 +44,9 @@ public class OrderAdminController {
     }
 
     @PostMapping("/orders/{id}/query")
-    public ApiResult<PayResponse> queryOrder(@PathVariable Long id) {
-        return ApiResult.success(orderAdminService.queryOrder(id));
+    public ApiResult<PayResponse> queryOrder(@PathVariable Long id,
+                                             @RequestParam(defaultValue = "false") boolean force) {
+        return ApiResult.success(orderAdminService.queryOrder(id, force));
     }
 
     @GetMapping("/order-logs")

@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Router 支付接口测试工具</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --text: #1f2937;
+        --muted: #64748b;
+        --border: #d8dee8;
+        --primary: #0f766e;
+        --primary-dark: #115e59;
+        --danger: #b42318;
+        --code-bg: #111827;
+        --code-text: #e5e7eb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        line-height: 1.5;
+      }
+
+      header {
+        background: #ffffff;
+        border-bottom: 1px solid var(--border);
+        padding: 18px 28px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(360px, 520px) minmax(420px, 1fr);
+        gap: 16px;
+        padding: 16px;
+      }
+
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 17px;
+      }
+
+      h3 {
+        margin: 18px 0 10px;
+        font-size: 15px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        color: #334155;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 9px 10px;
+        color: var(--text);
+        font: inherit;
+        background: #ffffff;
+      }
+
+      textarea {
+        min-height: 72px;
+        resize: vertical;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 2px solid rgba(15, 118, 110, 0.18);
+        border-color: var(--primary);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      button {
+        border: 1px solid transparent;
+        border-radius: 6px;
+        padding: 9px 13px;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+      }
+
+      button.primary {
+        background: var(--primary);
+        color: #ffffff;
+      }
+
+      button.primary:hover {
+        background: var(--primary-dark);
+      }
+
+      button.secondary {
+        background: #ffffff;
+        border-color: var(--border);
+        color: var(--text);
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .error {
+        color: var(--danger);
+        font-size: 13px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+      }
+
+      .status {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 10px;
+      }
+
+      pre {
+        min-height: 120px;
+        max-height: 360px;
+        overflow: auto;
+        margin: 0;
+        padding: 12px;
+        border-radius: 8px;
+        background: var(--code-bg);
+        color: var(--code-text);
+        font: 13px/1.55 Consolas, "Courier New", monospace;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .endpoint {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: #eef6f5;
+        color: #0f5f59;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 13px;
+      }
+
+      @media (max-width: 980px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        header {
+          padding: 14px 16px;
+        }
+
+        main {
+          padding: 10px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Payment Router 支付接口测试工具</h1>
+      <div class="hint">页面会使用 appSecret 在浏览器本地签名，只向实际 API 发送 appId、业务参数、timestamp、nonce、sign。</div>
+    </header>
+
+    <main>
+      <section>
+        <h2>请求配置</h2>
+        <div class="grid">
+          <div class="field full">
+            <label for="baseUrl">服务地址</label>
+            <input id="baseUrl" autocomplete="off" />
+            <div class="hint">部署站点内访问时可使用当前地址；也可填 `http://192.168.2.33`。</div>
+          </div>
+
+          <div class="field">
+            <label for="apiType">接口类型</label>
+            <select id="apiType"></select>
+          </div>
+
+          <div class="field">
+            <label>请求接口</label>
+            <div id="endpoint" class="endpoint"></div>
+          </div>
+
+          <div class="field">
+            <label for="appId">appId</label>
+            <input id="appId" autocomplete="off" placeholder="MCH202605300001" />
+          </div>
+
+          <div class="field">
+            <label for="appSecret">appSecret</label>
+            <input id="appSecret" autocomplete="off" type="password" placeholder="仅本地签名使用" />
+          </div>
+
+          <div class="field">
+            <label for="merchantOrderNo">merchantOrderNo</label>
+            <input id="merchantOrderNo" autocomplete="off" />
+          </div>
+
+          <div class="field amount-field">
+            <label for="amount">金额</label>
+            <input id="amount" autocomplete="off" inputmode="decimal" value="1.00" />
+            <div class="hint">可填写测试金额；支付接口为 amount，退款接口为 refundAmount。</div>
+          </div>
+
+          <div class="field payment-field">
+            <label for="subject">subject</label>
+            <input id="subject" autocomplete="off" value="测试商品" />
+          </div>
+
+          <div class="field payment-field refund-field full">
+            <label for="notifyUrl">notifyUrl</label>
+            <input id="notifyUrl" autocomplete="off" placeholder="https://merchant.example.com/pay/notify" />
+          </div>
+
+          <div class="field barcode-field">
+            <label for="authCode">authCode</label>
+            <input id="authCode" autocomplete="off" value="288888888888888888" />
+          </div>
+
+          <div class="field h5-field">
+            <label for="returnUrl">returnUrl</label>
+            <input id="returnUrl" autocomplete="off" placeholder="https://merchant.example.com/pay/success" />
+          </div>
+
+          <div class="field sub-app-id-field">
+            <label for="subAppId">subAppId</label>
+            <input id="subAppId" autocomplete="off" />
+          </div>
+
+          <div class="field wechat-field">
+            <label for="subOpenId">subOpenId</label>
+            <input id="subOpenId" autocomplete="off" />
+          </div>
+
+          <div class="field alipay-field">
+            <label for="buyerId">buyerId</label>
+            <input id="buyerId" autocomplete="off" placeholder="2088..." />
+          </div>
+
+          <div class="field alipay-field">
+            <label for="buyerOpenId">buyerOpenId</label>
+            <input id="buyerOpenId" autocomplete="off" placeholder="074...openId" />
+          </div>
+
+          <div class="field refund-field refund-query-field">
+            <label for="merchantRefundNo">merchantRefundNo</label>
+            <input id="merchantRefundNo" autocomplete="off" />
+          </div>
+
+          <div class="field refund-field">
+            <label for="reason">reason</label>
+            <input id="reason" autocomplete="off" value="用户申请退款" />
+          </div>
+
+          <div class="field">
+            <label for="timestamp">timestamp</label>
+            <input id="timestamp" autocomplete="off" inputmode="numeric" />
+          </div>
+
+          <div class="field">
+            <label for="nonce">nonce</label>
+            <input id="nonce" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="secondary" id="refreshOrderNo" type="button">刷新订单号</button>
+          <button class="secondary" id="refreshTimeNonce" type="button">刷新时间和 nonce</button>
+          <button class="secondary" id="buildOnly" type="button">只生成请求</button>
+          <button class="primary" id="sendRequest" type="button">发送实际请求</button>
+        </div>
+        <div id="error" class="error"></div>
+      </section>
+
+      <section>
+        <h2>调试输出</h2>
+        <p id="status" class="status">尚未发送请求。</p>
+
+        <h3>待签名字符串</h3>
+        <pre id="canonicalOutput"></pre>
+
+        <h3>请求体</h3>
+        <pre id="requestOutput"></pre>
+
+        <h3>响应</h3>
+        <div class="actions">
+          <button class="secondary" id="requeryRefund" type="button" style="display: none">重新查询退款状态</button>
+        </div>
+        <pre id="responseOutput"></pre>
+      </section>
+    </main>
+
+    <script>
+      const API_TYPES = {
+        barcode: {
+          label: "条码支付",
+          path: "/api/pay/barcode",
+          methodCode: "BARCODE_PAY",
+          fields: ["payment", "barcode"],
+          numberField: "amount"
+        },
+        scan: {
+          label: "扫码支付",
+          path: "/api/pay/scan",
+          methodCode: "SCAN_PAY",
+          fields: ["payment"],
+          numberField: "amount"
+        },
+        h5: {
+          label: "H5/链接跳转支付",
+          path: "/api/pay/h5",
+          methodCode: "H5_PAY",
+          fields: ["payment", "h5"],
+          numberField: "amount"
+        },
+        wechat: {
+          label: "微信 JSAPI 支付",
+          path: "/api/pay/wechat-jsapi",
+          methodCode: "WECHAT_JSAPI_PAY",
+          fields: ["payment", "wechat"],
+          numberField: "amount"
+        },
+        alipay: {
+          label: "支付宝 JSAPI 支付",
+          path: "/api/pay/alipay-jsapi",
+          methodCode: "ALIPAY_JSAPI_PAY",
+          fields: ["payment", "alipay"],
+          numberField: "amount"
+        },
+        query: {
+          label: "查单",
+          path: "/api/pay/query",
+          methodCode: "QUERY",
+          fields: [],
+          numberField: null
+        },
+        refund: {
+          label: "退款",
+          path: "/api/pay/refund",
+          methodCode: "REFUND",
+          fields: ["refund"],
+          numberField: "refundAmount"
+        },
+        refundQuery: {
+          label: "退款查询",
+          path: "/api/pay/refund/query",
+          methodCode: "REFUND_QUERY",
+          fields: ["refundQuery"],
+          numberField: null
+        }
+      };
+
+      const ids = [
+        "baseUrl",
+        "apiType",
+        "endpoint",
+        "appId",
+        "appSecret",
+        "merchantOrderNo",
+        "amount",
+        "subject",
+        "notifyUrl",
+        "authCode",
+        "returnUrl",
+        "subAppId",
+        "subOpenId",
+        "buyerId",
+        "buyerOpenId",
+        "merchantRefundNo",
+        "reason",
+        "timestamp",
+        "nonce",
+        "error",
+        "status",
+        "canonicalOutput",
+        "requestOutput",
+        "responseOutput",
+        "requeryRefund"
+      ];
+      const el = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
+      let lastResponseJson = null;
+
+      function init() {
+        el.baseUrl.value = localStorage.getItem("payTest.baseUrl") || window.location.origin || "http://192.168.2.33";
+        el.appId.value = localStorage.getItem("payTest.appId") || "";
+        el.notifyUrl.value = localStorage.getItem("payTest.notifyUrl") || "";
+
+        for (const [key, item] of Object.entries(API_TYPES)) {
+          const option = document.createElement("option");
+          option.value = key;
+          option.textContent = item.label;
+          el.apiType.appendChild(option);
+        }
+
+        el.apiType.value = "barcode";
+        fillOrderNo();
+        fillTimeAndNonce();
+        bindEvents();
+        updateVisibility();
+        buildRequest().catch(showError);
+      }
+
+      function bindEvents() {
+        el.apiType.addEventListener("change", () => {
+          updateVisibility();
+          if (!el.merchantOrderNo.value) fillOrderNo();
+          buildRequest().catch(showError);
+        });
+        document.getElementById("refreshOrderNo").addEventListener("click", () => {
+          fillOrderNo();
+          buildRequest().catch(showError);
+        });
+        document.getElementById("refreshTimeNonce").addEventListener("click", () => {
+          fillTimeAndNonce();
+          buildRequest().catch(showError);
+        });
+        document.getElementById("buildOnly").addEventListener("click", () => buildRequest().catch(showError));
+        document.getElementById("sendRequest").addEventListener("click", () => sendRequest());
+        el.requeryRefund.addEventListener("click", requeryRefundStatus);
+        document.querySelectorAll("input, select, textarea").forEach((input) => {
+          input.addEventListener("input", () => buildRequest().catch(showError));
+        });
+      }
+
+      function updateVisibility() {
+        const type = currentType();
+        el.endpoint.textContent = "POST " + type.path;
+        const groups = ["payment", "barcode", "h5", "wechat", "alipay", "refund", "refundQuery"];
+        for (const group of groups) {
+          document.querySelectorAll("." + toKebab(group) + "-field").forEach((node) => {
+            node.style.display = type.fields.includes(group) ? "" : "none";
+          });
+        }
+        document.querySelectorAll(".amount-field").forEach((node) => {
+          node.style.display = type.fields.includes("payment") || type.fields.includes("refund") ? "" : "none";
+        });
+        document.querySelectorAll(".sub-app-id-field").forEach((node) => {
+          node.style.display = type.fields.includes("wechat") || type.fields.includes("alipay") ? "" : "none";
+        });
+      }
+
+      function toKebab(value) {
+        return value.replace(/[A-Z]/g, (match) => "-" + match.toLowerCase());
+      }
+
+      function currentType() {
+        return API_TYPES[el.apiType.value];
+      }
+
+      function fillOrderNo() {
+        const type = currentType();
+        const prefix = {
+          BARCODE_PAY: "P",
+          SCAN_PAY: "S",
+          H5_PAY: "H",
+          WECHAT_JSAPI_PAY: "J",
+          ALIPAY_JSAPI_PAY: "A",
+          QUERY: "Q",
+          REFUND: "R",
+          REFUND_QUERY: "RQ"
+        }[type.methodCode] || "T";
+        el.merchantOrderNo.value = prefix + compactTime();
+        if (type.methodCode === "REFUND" || type.methodCode === "REFUND_QUERY") {
+          el.merchantRefundNo.value = "RF" + compactTime();
+        }
+      }
+
+      function fillTimeAndNonce() {
+        const now = Date.now();
+        el.timestamp.value = String(now);
+        el.nonce.value = "N" + now + randomPart();
+      }
+
+      function compactTime() {
+        const date = new Date();
+        const pad = (value, size = 2) => String(value).padStart(size, "0");
+        return [
+          date.getFullYear(),
+          pad(date.getMonth() + 1),
+          pad(date.getDate()),
+          pad(date.getHours()),
+          pad(date.getMinutes()),
+          pad(date.getSeconds()),
+          pad(date.getMilliseconds(), 3)
+        ].join("");
+      }
+
+      function randomPart() {
+        return Math.random().toString(36).slice(2, 8).toUpperCase();
+      }
+
+      async function buildRequest(extraPayload = {}) {
+        clearError();
+        const type = currentType();
+        const params = collectParams(type);
+        validateParams(type, params);
+        const signingParams = { ...params };
+        const appSecret = el.appSecret.value;
+        const canonical = canonicalString(signingParams);
+        const sign = appSecret ? await sha256Hex(canonical + appSecret) : "";
+        const payload = { ...params, sign, ...extraPayload };
+        const jsonBody = stringifyPayload(payload, type.numberField);
+
+        localStorage.setItem("payTest.baseUrl", el.baseUrl.value.trim());
+        localStorage.setItem("payTest.appId", el.appId.value.trim());
+        localStorage.setItem("payTest.notifyUrl", el.notifyUrl.value.trim());
+
+        el.canonicalOutput.textContent = canonical + (appSecret ? "{appSecret}" : "{请填写 appSecret 后计算签名}");
+        el.requestOutput.textContent = jsonBody;
+        return { type, payload, jsonBody, canonical, sign };
+      }
+
+      function collectParams(type) {
+        const params = {
+          appId: textValue("appId"),
+          merchantOrderNo: textValue("merchantOrderNo"),
+          timestamp: numberValue("timestamp"),
+          nonce: textValue("nonce")
+        };
+
+        if (type.fields.includes("payment")) {
+          params.amount = decimalValue("amount");
+          params.subject = textValue("subject");
+          optional(params, "notifyUrl", textValue("notifyUrl"));
+        }
+        if (type.fields.includes("barcode")) {
+          params.authCode = textValue("authCode");
+        }
+        if (type.fields.includes("h5")) {
+          optional(params, "returnUrl", textValue("returnUrl"));
+        }
+        if (type.fields.includes("wechat")) {
+          params.subAppId = textValue("subAppId");
+          params.subOpenId = textValue("subOpenId");
+        }
+        if (type.fields.includes("alipay")) {
+          optional(params, "subAppId", textValue("subAppId"));
+          optional(params, "buyerId", textValue("buyerId"));
+          optional(params, "buyerOpenId", textValue("buyerOpenId"));
+        }
+        if (type.fields.includes("refund")) {
+          optional(params, "merchantRefundNo", textValue("merchantRefundNo"));
+          params.refundAmount = decimalValue("amount");
+          optional(params, "reason", textValue("reason"));
+          optional(params, "notifyUrl", textValue("notifyUrl"));
+        }
+        if (type.fields.includes("refundQuery")) {
+          optional(params, "merchantRefundNo", textValue("merchantRefundNo"));
+        }
+        return params;
+      }
+
+      function validateParams(type, params) {
+        const missing = [];
+        for (const key of ["appId", "merchantOrderNo", "timestamp", "nonce"]) {
+          if (params[key] === "" || params[key] === null || params[key] === undefined) missing.push(key);
+        }
+        if (!el.appSecret.value) missing.push("appSecret");
+        if (type.fields.includes("payment")) {
+          for (const key of ["amount", "subject"]) {
+            if (!params[key]) missing.push(key);
+          }
+        }
+        if (type.fields.includes("barcode") && !params.authCode) missing.push("authCode");
+        if (type.fields.includes("wechat")) {
+          if (!params.subAppId) missing.push("subAppId");
+          if (!params.subOpenId) missing.push("subOpenId");
+        }
+        if (type.fields.includes("alipay") && !params.buyerId && !params.buyerOpenId) {
+          missing.push("buyerId 或 buyerOpenId");
+        }
+        if (type.fields.includes("refund") && !params.refundAmount) missing.push("refundAmount");
+        if (missing.length) {
+          throw new Error("请填写必填字段：" + Array.from(new Set(missing)).join("、"));
+        }
+      }
+
+      function textValue(id) {
+        return el[id].value.trim();
+      }
+
+      function numberValue(id) {
+        const value = textValue(id);
+        return value ? Number(value) : null;
+      }
+
+      function decimalValue(id) {
+        const value = textValue(id);
+        if (!value) return "";
+        if (!/^\d+(\.\d+)?$/.test(value)) {
+          throw new Error("金额格式不正确：" + value);
+        }
+        return value;
+      }
+
+      function optional(target, key, value) {
+        if (value !== "") target[key] = value;
+      }
+
+      function canonicalString(params) {
+        return Object.keys(params)
+          .filter((key) => key !== "sign" && params[key] !== null && params[key] !== undefined)
+          .sort()
+          .map((key) => key + "=" + params[key])
+          .join("&");
+      }
+
+      async function sha256Hex(text) {
+        if (!window.crypto || !crypto.subtle) {
+          return sha256HexFallback(text);
+        }
+        const bytes = new TextEncoder().encode(text);
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(digest))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+      }
+
+      function sha256HexFallback(text) {
+        const rightRotate = (value, amount) => (value >>> amount) | (value << (32 - amount));
+        const bytes = new TextEncoder().encode(text);
+        const bitLength = bytes.length * 8;
+        const paddedLength = (((bytes.length + 9 + 63) >> 6) << 6);
+        const padded = new Uint8Array(paddedLength);
+        padded.set(bytes);
+        padded[bytes.length] = 0x80;
+        const view = new DataView(padded.buffer);
+        view.setUint32(paddedLength - 8, Math.floor(bitLength / 0x100000000));
+        view.setUint32(paddedLength - 4, bitLength >>> 0);
+
+        const k = [
+          0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+          0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+          0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+          0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+          0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+          0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+          0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+          0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+        ];
+        const h = [
+          0x6a09e667,
+          0xbb67ae85,
+          0x3c6ef372,
+          0xa54ff53a,
+          0x510e527f,
+          0x9b05688c,
+          0x1f83d9ab,
+          0x5be0cd19
+        ];
+        const w = new Uint32Array(64);
+
+        for (let offset = 0; offset < paddedLength; offset += 64) {
+          for (let i = 0; i < 16; i++) {
+            w[i] = view.getUint32(offset + i * 4);
+          }
+          for (let i = 16; i < 64; i++) {
+            const s0 = rightRotate(w[i - 15], 7) ^ rightRotate(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+            const s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+            w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+          }
+
+          let a = h[0];
+          let b = h[1];
+          let c = h[2];
+          let d = h[3];
+          let e = h[4];
+          let f = h[5];
+          let g = h[6];
+          let currentH = h[7];
+
+          for (let i = 0; i < 64; i++) {
+            const s1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
+            const ch = (e & f) ^ (~e & g);
+            const temp1 = (currentH + s1 + ch + k[i] + w[i]) >>> 0;
+            const s0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
+            const maj = (a & b) ^ (a & c) ^ (b & c);
+            const temp2 = (s0 + maj) >>> 0;
+            currentH = g;
+            g = f;
+            f = e;
+            e = (d + temp1) >>> 0;
+            d = c;
+            c = b;
+            b = a;
+            a = (temp1 + temp2) >>> 0;
+          }
+
+          h[0] = (h[0] + a) >>> 0;
+          h[1] = (h[1] + b) >>> 0;
+          h[2] = (h[2] + c) >>> 0;
+          h[3] = (h[3] + d) >>> 0;
+          h[4] = (h[4] + e) >>> 0;
+          h[5] = (h[5] + f) >>> 0;
+          h[6] = (h[6] + g) >>> 0;
+          h[7] = (h[7] + currentH) >>> 0;
+        }
+
+        return h.map((value) => value.toString(16).padStart(8, "0")).join("");
+      }
+
+      function stringifyPayload(payload, rawNumberField) {
+        const entries = Object.entries(payload).filter(([, value]) => value !== null && value !== undefined);
+        const lines = entries.map(([key, value]) => {
+          if (key === rawNumberField) {
+            return `  ${JSON.stringify(key)}: ${value}`;
+          }
+          return `  ${JSON.stringify(key)}: ${JSON.stringify(value)}`;
+        });
+        return "{\n" + lines.join(",\n") + "\n}";
+      }
+
+      async function sendRequest(options = {}) {
+        try {
+          const extraPayload = options.forceRefundQuery ? { forceQuery: true } : {};
+          const built = await buildRequest(extraPayload);
+          el.responseOutput.textContent = "";
+          el.status.textContent = "请求中...";
+          const url = normalizeBaseUrl(el.baseUrl.value) + built.type.path;
+          const started = performance.now();
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: built.jsonBody
+          });
+          const text = await response.text();
+          const elapsed = Math.round(performance.now() - started);
+          el.status.textContent = `HTTP ${response.status}，耗时 ${elapsed} ms，URL：${url}`;
+          el.responseOutput.textContent = formatResponseText(text);
+          lastResponseJson = parseJsonOrNull(text);
+          updateRequeryRefundButton();
+        } catch (error) {
+          showError(error);
+          el.status.textContent = "请求失败。";
+        }
+      }
+
+      function normalizeBaseUrl(value) {
+        const trimmed = value.trim() || window.location.origin;
+        return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+      }
+
+      function formatResponseText(text) {
+        if (!text) return "";
+        try {
+          return JSON.stringify(JSON.parse(text), null, 2);
+        } catch {
+          return text;
+        }
+      }
+
+      function parseJsonOrNull(text) {
+        try {
+          return JSON.parse(text);
+        } catch {
+          return null;
+        }
+      }
+
+      function updateRequeryRefundButton() {
+        const refundNo = responseRefundNo();
+        const type = currentType();
+        const isRefundResponse = type.fields.includes("refund") || type.fields.includes("refundQuery");
+        el.requeryRefund.style.display = isRefundResponse && refundNo ? "" : "none";
+      }
+
+      function responseRefundNo() {
+        return lastResponseJson?.data?.merchantRefundNo || textValue("merchantRefundNo");
+      }
+
+      function requeryRefundStatus() {
+        const refundNo = responseRefundNo();
+        if (!refundNo) {
+          showError(new Error("没有可查询的 merchantRefundNo"));
+          return;
+        }
+        el.apiType.value = "refundQuery";
+        updateVisibility();
+        el.merchantRefundNo.value = refundNo;
+        fillTimeAndNonce();
+        sendRequest({ forceRefundQuery: true });
+      }
+
+      function showError(error) {
+        el.error.textContent = error && error.message ? error.message : String(error);
+      }
+
+      function clearError() {
+        el.error.textContent = "";
+      }
+
+      init();
+    </script>
+  </body>
+</html>

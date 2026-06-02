@@ -114,3 +114,29 @@ docker compose down
 docker compose down -v
 docker compose up -d
 ```
+
+## LFWin production deployment checklist
+
+Before publishing a production build, copy `.env.production.example` to `.env` and replace all placeholder secrets. Confirm these values are set for the real LFWin channel:
+
+```text
+PAY_ROUTER_CHANNEL_ADAPTER=lfwin
+PAY_ROUTER_LFWIN_BASE_URL=https://api2.lfwin.com
+PAY_ROUTER_LFWIN_TIMEOUT_SECONDS=15
+PAY_QUERY_ENABLED=true
+```
+
+After code changes, rebuild the backend and frontend images so the latest channel adapter and admin pages are included:
+
+```bash
+docker compose up -d --build backend frontend nginx
+```
+
+Then verify the unified entry point:
+
+```bash
+curl http://localhost/api/health
+curl http://localhost/
+```
+
+Runtime `.env`, logs, root handover documents, local test pages, and local skill folders are development artifacts and should not be committed with the deployment package.

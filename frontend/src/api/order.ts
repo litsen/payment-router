@@ -21,6 +21,7 @@ export interface OrderItem {
   accountId?: number
   accountName?: string
   accountApiKeyMasked?: string
+  accountApiKey?: string
   status: string
   notifyUrl?: string
   paySuccessTime?: string
@@ -102,8 +103,8 @@ export function getOrder(id: number) {
   return http.get<ApiResult<OrderItem>>(`/admin/orders/${id}`)
 }
 
-export function queryOrder(id: number) {
-  return http.post<ApiResult<unknown>>(`/admin/orders/${id}/query`)
+export function queryOrder(id: number, force = false) {
+  return http.post<ApiResult<unknown>>(`/admin/orders/${id}/query`, null, { params: { force } })
 }
 
 export function listOrderLogs(params: Record<string, unknown>) {
@@ -126,6 +127,6 @@ export function getRefundOrder(id: number) {
   return http.get<ApiResult<RefundOrderItem>>(`/admin/refunds/${id}`)
 }
 
-export function queryRefundOrder(id: number) {
-  return http.post<ApiResult<unknown>>(`/admin/refunds/${id}/query`)
+export function queryRefundOrder(id: number, force = false) {
+  return http.post<ApiResult<unknown>>(`/admin/refunds/${id}/query`, null, { params: { force } })
 }

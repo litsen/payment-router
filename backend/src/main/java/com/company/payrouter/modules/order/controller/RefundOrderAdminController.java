@@ -45,7 +45,8 @@ public class RefundOrderAdminController {
     }
 
     @PostMapping("/{id}/query")
-    public ApiResult<RefundResponse> queryRefund(@PathVariable Long id) {
-        return ApiResult.success(refundOrderAdminService.queryRefund(id));
+    public ApiResult<RefundResponse> queryRefund(@PathVariable Long id,
+                                                 @RequestParam(defaultValue = "false") boolean force) {
+        return ApiResult.success(refundOrderAdminService.queryRefund(id, force));
     }
 }

@@ -15,7 +15,6 @@ import com.company.payrouter.modules.gateway.channel.ChannelDtos.RefundChannelRe
 import com.company.payrouter.modules.gateway.channel.ChannelDtos.RefundQueryChannelRequest;
 import com.company.payrouter.modules.gateway.channel.ChannelDtos.ScanChannelRequest;
 import com.company.payrouter.modules.gateway.channel.ChannelDtos.WechatJsapiChannelRequest;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -183,13 +182,9 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         params.put("service", "pay.comm.query_order");
         params.put("apikey", context.apiKey());
         params.put("nonce_str", nonce());
-        if (StringUtils.hasText(request.upstreamOrderId())) {
-            params.put("orderid", request.upstreamOrderId());
-        } else {
-            params.put("mch_orderid", request.merchantOrderNo());
-            if (StringUtils.hasText(request.upstreamOrderTime())) {
-                params.put("order_time", request.upstreamOrderTime());
-            }
+        params.put("mch_orderid", request.merchantOrderNo());
+        if (StringUtils.hasText(request.upstreamOrderTime())) {
+            params.put("order_time", request.upstreamOrderTime());
         }
         return call("/payapi/pay/query_order", params, context.signKey());
     }
@@ -211,7 +206,7 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         if (StringUtils.hasText(request.merchantRefundNo())) params.put("mch_refund_no", request.merchantRefundNo());
         if (StringUtils.hasText(request.reason())) params.put("reason", request.reason());
         if (StringUtils.hasText(request.notifyUrl())) params.put("notify_url", request.notifyUrl());
-        return call("/payapi/pay/refund_order", params, context.signKey());
+        return callRefund("/payapi/pay/refund_order", params, context.signKey());
     }
 
     @Override
@@ -228,7 +223,7 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
             if (StringUtils.hasText(request.upstreamOrderTime())) params.put("order_time", request.upstreamOrderTime());
         }
         if (StringUtils.hasText(request.merchantRefundNo())) params.put("mch_refund_no", request.merchantRefundNo());
-        return call("/payapi/pay/query_refund", params, context.signKey());
+        return callRefund("/payapi/pay/query_refund", params, context.signKey());
     }
 
     private ChannelResponse call(String path, Map<String, String> params, String signKey) {
@@ -241,6 +236,18 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         boolean signVerified = verifyResponse(values, signKey, responseBody);
         values.put("_signVerified", String.valueOf(signVerified));
         return toChannelResponse(values, responseBody);
+    }
+
+    private ChannelResponse callRefund(String path, Map<String, String> params, String signKey) {
+        if (!StringUtils.hasText(signKey)) {
+            throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "LFWin signKey is not configured");
+        }
+        params.put("sign", signHelper.md5Sign(params, signKey));
+        String responseBody = postForm(path, params);
+        Map<String, String> values = parseResponse(responseBody);
+        boolean signVerified = verifyRefundResponse(values, signKey);
+        values.put("_signVerified", String.valueOf(signVerified));
+        return toRefundChannelResponse(values, responseBody);
     }
 
     private String postForm(String path, Map<String, String> params) {
@@ -263,20 +270,19 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         }
     }
 
-    private Map<String, String> parseResponse(String responseBody) {
+    Map<String, String> parseResponse(String responseBody) {
         try {
             JsonNode root = objectMapper.readTree(responseBody);
-            Map<String, Object> values = objectMapper.convertValue(root, new TypeReference<>() {
-            });
-            Map<String, String> flat = values.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue() == null ? "" : String.valueOf(entry.getValue()), (left, right) -> right, LinkedHashMap::new));
+            Map<String, String> flat = new LinkedHashMap<>();
+            root.fields().forEachRemaining(entry -> flat.put(entry.getKey(), jsonText(entry.getValue())));
             JsonNode data = root.path("data");
             if (data.isObject()) {
-                flat.remove("data");
-                data.fields().forEachRemaining(entry -> flat.putIfAbsent(entry.getKey(), entry.getValue().isValueNode() ? entry.getValue().asText() : entry.getValue().toString()));
+                flattenObject(data, flat);
             } else if (data.isTextual()) {
-                flat.putIfAbsent("data", data.asText());
+                flattenTextJson(data.asText(), flat);
             }
+            flattenFirstObject(root.path("lists"), flat);
+            flattenFirstObject(data.path("lists"), flat);
             return flat;
         } catch (Exception ignored) {
             Map<String, String> values = new LinkedHashMap<>();
@@ -293,19 +299,56 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         }
     }
 
-    private boolean verifyResponse(Map<String, String> values, String signKey, String rawResponse) {
+    private String jsonText(JsonNode node) {
+        return node.isValueNode() ? node.asText() : node.toString();
+    }
+
+    private void flattenObject(JsonNode object, Map<String, String> flat) {
+        object.fields().forEachRemaining(entry -> flat.putIfAbsent(entry.getKey(), jsonText(entry.getValue())));
+    }
+
+    private void flattenFirstObject(JsonNode array, Map<String, String> flat) {
+        if (array.isArray() && !array.isEmpty() && array.get(0).isObject()) {
+            flattenObject(array.get(0), flat);
+        }
+    }
+
+    private void flattenTextJson(String text, Map<String, String> flat) {
+        if (!StringUtils.hasText(text)) {
+            return;
+        }
+        try {
+            JsonNode parsed = objectMapper.readTree(text);
+            if (parsed.isObject()) {
+                flattenObject(parsed, flat);
+                flattenFirstObject(parsed.path("lists"), flat);
+            }
+        } catch (Exception ignored) {
+            // LFWin may also return a plain payment URL in data.
+        }
+    }
+
+    boolean verifyResponse(Map<String, String> values, String signKey, String rawResponse) {
         String status = values.get("status");
         if (!"10000".equals(status) || !StringUtils.hasText(values.get("sign"))) {
             return true;
         }
         boolean verified = signHelper.verifyMd5(values, signKey);
-        if (!verified && !hasPaymentPayload(values)) {
+        if (!verified && !hasPaymentPayload(values) && !hasRefundPayload(values)) {
             throw new ChannelException("LFWin response sign verification failed", rawResponse);
         }
         return verified;
     }
 
-    private ChannelResponse toChannelResponse(Map<String, String> values, String rawResponse) {
+    boolean verifyRefundResponse(Map<String, String> values, String signKey) {
+        String status = values.get("status");
+        if (!"10000".equals(status) || !StringUtils.hasText(values.get("sign"))) {
+            return true;
+        }
+        return signHelper.verifyMd5(values, signKey);
+    }
+
+    ChannelResponse toChannelResponse(Map<String, String> values, String rawResponse) {
         String status = values.get("status");
         String payStatus = values.get("paystatus");
         String normalized = "PAYING";
@@ -328,6 +371,31 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         );
     }
 
+    ChannelResponse toRefundChannelResponse(Map<String, String> values, String rawResponse) {
+        String status = values.get("status");
+        String refundStatus = firstText(values, "refund_status", "refundStatus");
+        String normalized = switch (status == null ? "" : status) {
+            case "4001" -> "PROCESSING";
+            case "1002", "4000", "4002" -> "FAILED";
+            case "10000" -> switch (refundStatus == null ? "" : refundStatus) {
+                case "1" -> "SUCCESS";
+                case "2" -> "FAILED";
+                default -> "PROCESSING";
+            };
+            default -> "FAILED";
+        };
+        return new ChannelResponse(
+                normalized,
+                firstText(values, "orderid", "order_id"),
+                firstText(values, "refund_orderid", "refund_order_id", "refund_no", "trade_no", "out_trade_no", "dis_name"),
+                firstText(values, "order_time", "ordertime"),
+                status,
+                firstText(values, "message", "msg", "errmsg", "return_msg"),
+                refundPayData(values, normalized),
+                rawResponse
+        );
+    }
+
     private Object payData(Map<String, String> values) {
         Map<String, String> data = new LinkedHashMap<>();
         copyAs(values, data, "pay_url", "payUrl");
@@ -335,12 +403,19 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         copyIfPresent(values, data, "url");
         copyIfPresent(values, data, "qr_code");
         copyIfPresent(values, data, "code_url");
-        copyIfPresent(values, data, "appId");
-        copyIfPresent(values, data, "timeStamp");
-        copyIfPresent(values, data, "nonceStr");
-        copyIfPresent(values, data, "signType");
+        copyFirstAs(values, data, "appId", "appId", "appid", "app_id");
+        copyFirstAs(values, data, "timeStamp", "timeStamp", "time_stamp");
+        copyFirstAs(values, data, "nonceStr", "nonceStr", "nonce_str");
+        copyFirstAs(values, data, "signType", "signType");
         copyIfPresent(values, data, "package");
-        copyIfPresent(values, data, "paySign");
+        copyFirstAs(values, data, "paySign", "paySign", "pay_sign");
+        if (!StringUtils.hasText(data.get("package")) && StringUtils.hasText(values.get("prepay_id"))) {
+            data.put("package", "prepay_id=" + values.get("prepay_id"));
+        }
+        if (hasWechatInvokePayload(data)) {
+            copyFirstAs(values, data, "signType", "signType", "sign_type");
+        }
+        copyFirstAs(values, data, "tradeNo", "tradeNo", "tradeNO", "trade_no");
         copyIfPresent(values, data, "data");
         copyIfPresent(values, data, "user_id");
         copyIfPresent(values, data, "openid");
@@ -353,6 +428,19 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         return data.isEmpty() ? null : data;
     }
 
+    private Object refundPayData(Map<String, String> values, String normalizedStatus) {
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("refundStatus", normalizedStatus);
+        copyIfPresent(values, data, "refund_status");
+        copyIfPresent(values, data, "refund_orderid");
+        copyIfPresent(values, data, "refund_no");
+        copyIfPresent(values, data, "mch_refund_no");
+        if ("false".equals(values.get("_signVerified"))) {
+            data.put("signVerified", "false");
+        }
+        return data;
+    }
+
     private boolean hasPaymentPayload(Map<String, String> values) {
         return StringUtils.hasText(values.get("pay_url"))
                 || StringUtils.hasText(values.get("url"))
@@ -363,6 +451,12 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
                 || StringUtils.hasText(values.get("paySign"))
                 || StringUtils.hasText(values.get("trade_no"))
                 || StringUtils.hasText(values.get("orderid"));
+    }
+
+    private boolean hasRefundPayload(Map<String, String> values) {
+        return StringUtils.hasText(firstText(values, "refund_status", "refundStatus"))
+                || StringUtils.hasText(firstText(values, "refund_orderid", "refund_order_id"))
+                || StringUtils.hasText(values.get("mch_refund_no"));
     }
 
     private String qrcodeService(String channel) {
@@ -384,6 +478,24 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         if (StringUtils.hasText(source.get(sourceKey))) {
             target.put(targetKey, source.get(sourceKey));
         }
+    }
+
+    private void copyFirstAs(Map<String, String> source, Map<String, String> target, String targetKey, String... sourceKeys) {
+        if (StringUtils.hasText(target.get(targetKey))) {
+            return;
+        }
+        String value = firstText(source, sourceKeys);
+        if (StringUtils.hasText(value)) {
+            target.put(targetKey, value);
+        }
+    }
+
+    private boolean hasWechatInvokePayload(Map<String, String> data) {
+        return StringUtils.hasText(data.get("appId"))
+                && StringUtils.hasText(data.get("timeStamp"))
+                && StringUtils.hasText(data.get("nonceStr"))
+                && StringUtils.hasText(data.get("package"))
+                && StringUtils.hasText(data.get("paySign"));
     }
 
     private String firstText(Map<String, String> values, String... keys) {
