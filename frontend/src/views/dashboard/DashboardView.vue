@@ -1,9 +1,14 @@
 <template>
   <div v-loading="loading" class="dashboard-page">
     <div class="metric-grid">
-      <div v-for="item in metrics" :key="item.label" class="metric-card">
-        <span>{{ item.label }}</span>
-        <strong>{{ item.value }}</strong>
+      <div v-for="item in metrics" :key="item.label" class="metric-card" :class="item.tone">
+        <div class="metric-content">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+        </div>
+        <div class="metric-icon">
+          <component :is="item.icon" />
+        </div>
       </div>
     </div>
 
@@ -30,6 +35,17 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import {
+  CircleCheck,
+  CircleClose,
+  CreditCard,
+  DataAnalysis,
+  RefreshRight,
+  SwitchButton,
+  TrendCharts,
+  UserFilled,
+  Wallet
+} from '@element-plus/icons-vue'
 import { BarChart, LineChart, PieChart } from 'echarts/charts'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import { init, use, type ECharts } from 'echarts/core'
@@ -73,14 +89,14 @@ let rateChart: ECharts | undefined
 let statusChart: ECharts | undefined
 
 const metrics = computed(() => [
-  { label: '今日交易金额', value: formatMoney(summary.value.todayAmount) },
-  { label: '今日交易笔数', value: summary.value.todayOrderCount },
-  { label: '今日成功笔数', value: summary.value.todaySuccessCount },
-  { label: '今日失败笔数', value: summary.value.todayFailedCount },
-  { label: '今日成功率', value: `${summary.value.todaySuccessRate}%` },
-  { label: '今日 UNKNOWN 订单数', value: summary.value.todayUnknownCount },
-  { label: '当前可用商户号数量', value: summary.value.availableAccountCount },
-  { label: '当前熔断商户号数量', value: summary.value.circuitBrokenAccountCount }
+  { label: '今日交易金额', value: formatMoney(summary.value.todayAmount), icon: Wallet, tone: 'metric-purple' },
+  { label: '今日交易笔数', value: summary.value.todayOrderCount, icon: CreditCard, tone: 'metric-blue' },
+  { label: '今日成功笔数', value: summary.value.todaySuccessCount, icon: CircleCheck, tone: 'metric-blue' },
+  { label: '今日失败笔数', value: summary.value.todayFailedCount, icon: CircleClose, tone: 'metric-pink' },
+  { label: '今日成功率', value: `${summary.value.todaySuccessRate}%`, icon: TrendCharts, tone: 'metric-cyan' },
+  { label: '今日 UNKNOWN 订单数', value: summary.value.todayUnknownCount, icon: RefreshRight, tone: 'metric-blue' },
+  { label: '当前可用商户号数量', value: summary.value.availableAccountCount, icon: UserFilled, tone: 'metric-blue' },
+  { label: '当前熔断商户号数量', value: summary.value.circuitBrokenAccountCount, icon: SwitchButton, tone: 'metric-muted' }
 ])
 
 onMounted(async () => {
@@ -123,50 +139,166 @@ function renderCharts() {
   statusChart = initChart(statusChartRef.value, statusChart)
 
   trendChart?.setOption({
-    color: ['#2563eb', '#16a34a'],
-    tooltip: { trigger: 'axis' },
-    grid: { left: 48, right: 18, top: 28, bottom: 42 },
-    xAxis: { type: 'category', data: hourlyTrend.value.map(item => item.hour), axisLabel: { rotate: 45 } },
+    color: ['#7c3cff', '#2f80ed'],
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+      borderColor: '#e8edff',
+      borderWidth: 1,
+      textStyle: { color: '#44516c' }
+    },
+    legend: {
+      top: 4,
+      left: 0,
+      itemWidth: 12,
+      itemHeight: 8,
+      textStyle: { color: '#71809f', fontSize: 12 }
+    },
+    grid: { left: 46, right: 28, top: 48, bottom: 34 },
+    xAxis: {
+      type: 'category',
+      data: hourlyTrend.value.map(item => item.hour),
+      boundaryGap: false,
+      axisTick: { show: false },
+      axisLine: { lineStyle: { color: '#e8edff' } },
+      axisLabel: { color: '#75829e' }
+    },
     yAxis: [
-      { type: 'value', name: '金额' },
-      { type: 'value', name: '笔数' }
+      { type: 'value', axisLabel: { color: '#75829e' }, splitLine: { lineStyle: { color: '#edf1fb' } } },
+      { type: 'value', name: '笔数', axisLabel: { color: '#75829e' }, splitLine: { show: false } }
     ],
     series: [
-      { name: '交易金额', type: 'line', smooth: true, data: hourlyTrend.value.map(item => item.amount) },
-      { name: '交易笔数', type: 'bar', yAxisIndex: 1, data: hourlyTrend.value.map(item => item.orderCount) }
+      {
+        name: '金额（￥）',
+        type: 'line',
+        smooth: true,
+        symbolSize: 8,
+        lineStyle: { width: 4 },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(124, 60, 255, 0.28)' },
+              { offset: 1, color: 'rgba(124, 60, 255, 0)' }
+            ]
+          }
+        },
+        data: hourlyTrend.value.map(item => item.amount)
+      },
+      {
+        name: '笔数',
+        type: 'bar',
+        yAxisIndex: 1,
+        barWidth: 14,
+        itemStyle: {
+          borderRadius: [7, 7, 0, 0],
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: '#2f80ed' },
+              { offset: 1, color: 'rgba(47, 128, 237, 0.12)' }
+            ]
+          }
+        },
+        data: hourlyTrend.value.map(item => item.orderCount)
+      }
     ]
   })
 
   amountChart?.setOption({
-    color: ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'],
-    tooltip: { trigger: 'item' },
+    color: ['#653df5', '#2f80ed', '#38bdf8', '#8b7cf6', '#4f46e5', '#22d3ee'],
+    tooltip: { trigger: 'item', formatter: '{b}<br />金额: ￥{c}<br />占比: {d}%' },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'middle',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { color: '#65728f', fontSize: 12 }
+    },
     series: [
       {
         name: '交易金额',
         type: 'pie',
-        radius: ['42%', '70%'],
+        radius: ['46%', '74%'],
+        center: ['38%', '52%'],
+        label: { show: false },
+        labelLine: { show: false },
         data: accountStats.value.map(item => ({ name: item.accountName, value: item.amount }))
       }
     ]
   })
 
   rateChart?.setOption({
-    color: ['#16a34a'],
+    color: ['#6f42f5'],
     tooltip: { trigger: 'axis', formatter: '{b}<br />成功率: {c}%' },
-    grid: { left: 48, right: 20, top: 20, bottom: 56 },
-    xAxis: { type: 'category', data: accountStats.value.map(item => item.accountName), axisLabel: { rotate: 35 } },
-    yAxis: { type: 'value', min: 0, max: 100, axisLabel: { formatter: '{value}%' } },
-    series: [{ name: '成功率', type: 'bar', data: accountStats.value.map(item => item.successRate) }]
+    grid: { left: 46, right: 20, top: 34, bottom: 44 },
+    xAxis: {
+      type: 'category',
+      data: accountStats.value.map(item => item.accountName),
+      axisTick: { show: false },
+      axisLine: { lineStyle: { color: '#e8edff' } },
+      axisLabel: { color: '#75829e', interval: 0 }
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 100,
+      axisLabel: { formatter: '{value}%', color: '#75829e' },
+      splitLine: { lineStyle: { color: '#edf1fb' } }
+    },
+    series: [
+      {
+        name: '成功率',
+        type: 'bar',
+        barWidth: 34,
+        itemStyle: {
+          borderRadius: [8, 8, 0, 0],
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: '#6f42f5' },
+              { offset: 1, color: 'rgba(111, 66, 245, 0.2)' }
+            ]
+          }
+        },
+        label: { show: true, position: 'top', formatter: '{c}%', color: '#44516c', fontWeight: 700 },
+        data: accountStats.value.map(item => item.successRate)
+      }
+    ]
   })
 
   statusChart?.setOption({
-    color: ['#16a34a', '#dc2626', '#f59e0b', '#2563eb', '#64748b'],
-    tooltip: { trigger: 'item' },
+    color: ['#4f6df5', '#7c3cff', '#38bdf8', '#f472b6', '#94a3b8'],
+    tooltip: { trigger: 'item', formatter: '{b}<br />笔数: {c}<br />占比: {d}%' },
+    legend: {
+      orient: 'vertical',
+      right: 36,
+      top: 'middle',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: { color: '#65728f', fontSize: 12 }
+    },
     series: [
       {
         name: '订单数',
         type: 'pie',
-        radius: '68%',
+        radius: ['48%', '76%'],
+        center: ['38%', '52%'],
+        label: { show: false },
+        labelLine: { show: false },
         data: statusDistribution.value.map(item => ({ name: item.status, value: item.count }))
       }
     ]

@@ -1,7 +1,10 @@
 <template>
-  <main class="login-page">
+  <main class="login-page" :style="loginBackgroundStyle">
     <section class="login-card">
-      <h1>支付路由后台</h1>
+      <div class="login-brand">
+        <img :src="logoUrl" alt="Payment Router" class="login-logo" />
+        <h1>支付路由后台</h1>
+      </div>
       <el-form :model="form" label-position="top" @submit.prevent="handleLogin">
         <el-form-item label="用户名">
           <el-input v-model="form.username" placeholder="admin" />
@@ -20,9 +23,14 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import logoUrl from '@/assets/brand/logo.png'
+import loginBgUrl from '@/assets/brand/login-bg.png'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const loginBackgroundStyle = {
+  backgroundImage: `url(${loginBgUrl})`
+}
 const loading = ref(false)
 const form = reactive({
   username: 'admin',

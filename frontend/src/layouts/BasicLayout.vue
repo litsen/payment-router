@@ -1,7 +1,10 @@
 <template>
   <el-container class="app-shell">
     <el-aside class="app-sidebar" width="220px">
-      <div class="brand">支付路由后台</div>
+      <div class="brand">
+        <img :src="logoUrl" alt="Payment Router" class="brand-logo" />
+        <span>支付路由后台</span>
+      </div>
       <el-menu router :default-active="route.path" class="sidebar-menu">
         <el-menu-item index="/">
           <el-icon><DataBoard /></el-icon>
@@ -168,6 +171,7 @@ import {
   Warning
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
+import logoUrl from '@/assets/brand/logo.png'
 
 const route = useRoute()
 const router = useRouter()
