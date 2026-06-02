@@ -1,0 +1,115 @@
+services:
+  mysql:
+    image: ${MYSQL_IMAGE:-mysql:8.0}
+    container_name: payment-router-mysql
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-payment_router}
+      MYSQL_USER: ${MYSQL_USER:-payment_router}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-payment_router}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-payment_router_root}
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$${MYSQL_ROOT_PASSWORD}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: payment-router-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command: >
+      sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
+        exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD";
+      else
+        exec redis-server --appendonly yes;
+      fi'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -n \"$${REDIS_PASSWORD}\" ]; then redis-cli -a \"$${REDIS_PASSWORD}\" ping; else redis-cli ping; fi"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ../backend
+    container_name: payment-router-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8080"
+    environment:
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:mysql://mysql:3306/payment_router?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-payment_router}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-payment_router}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST:-redis}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT:-6379}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:-}
+      SPRING_DATA_REDIS_DATABASE: ${SPRING_DATA_REDIS_DATABASE:-0}
+      PAY_ROUTER_ENFORCE_PRODUCTION_SECRETS: ${PAY_ROUTER_ENFORCE_PRODUCTION_SECRETS:-false}
+      PAY_ROUTER_JWT_SECRET: ${PAY_ROUTER_JWT_SECRET:-payment-router-jwt-secret-change-me-at-least-32-bytes}
+      PAY_ROUTER_AES_KEY: ${PAY_ROUTER_AES_KEY:-payment-router-local-dev-aes-key-change-me}
+      PAY_ROUTER_CHANNEL_ADAPTER: ${PAY_ROUTER_CHANNEL_ADAPTER:-mock}
+      PAY_ROUTER_LFWIN_BASE_URL: ${PAY_ROUTER_LFWIN_BASE_URL:-https://api2.lfwin.com}
+      PAY_ROUTER_LFWIN_TIMEOUT_SECONDS: ${PAY_ROUTER_LFWIN_TIMEOUT_SECONDS:-15}
+      PAY_QUERY_ENABLED: ${PAY_QUERY_ENABLED:-true}
+      PAY_QUERY_INTERVAL_SECONDS: ${PAY_QUERY_INTERVAL_SECONDS:-30}
+      PAY_QUERY_MAX_COUNT: ${PAY_QUERY_MAX_COUNT:-10}
+      PAY_ROUTER_LIMIT_RESERVATION_ENABLED: ${PAY_ROUTER_LIMIT_RESERVATION_ENABLED:-false}
+      PAY_ROUTER_LIMIT_RESERVATION_CHECK_DELAY_SECONDS: ${PAY_ROUTER_LIMIT_RESERVATION_CHECK_DELAY_SECONDS:-300}
+      PAY_ROUTER_LIMIT_RESERVATION_COMPENSATION_INTERVAL_SECONDS: ${PAY_ROUTER_LIMIT_RESERVATION_COMPENSATION_INTERVAL_SECONDS:-60}
+      PAY_ROUTER_LIMIT_RESERVATION_COMPENSATION_BATCH_SIZE: ${PAY_ROUTER_LIMIT_RESERVATION_COMPENSATION_BATCH_SIZE:-100}
+      PAY_ROUTER_LEGACY_POOL_SIGN_ENABLED: ${PAY_ROUTER_LEGACY_POOL_SIGN_ENABLED:-true}
+      PAY_ROUTER_LEGACY_POOL_SIGN_FALLBACK_AFTER_DEFAULT_APP_SECRET_FAILURE: ${PAY_ROUTER_LEGACY_POOL_SIGN_FALLBACK_AFTER_DEFAULT_APP_SECRET_FAILURE:-true}
+      PAY_ROUTER_LEGACY_POOL_SIGN_WARN_ONLY: ${PAY_ROUTER_LEGACY_POOL_SIGN_WARN_ONLY:-true}
+      PAY_ROUTER_LEGACY_POOL_SIGN_ALLOW_POOL_CODES: ${PAY_ROUTER_LEGACY_POOL_SIGN_ALLOW_POOL_CODES:-}
+      PAY_ROUTER_LEGACY_POOL_SIGN_DENY_POOL_CODES: ${PAY_ROUTER_LEGACY_POOL_SIGN_DENY_POOL_CODES:-}
+      LOG_PATH: ${BACKEND_LOG_PATH:-/app/logs}
+    volumes:
+      - ./logs/backend:/app/logs
+
+  frontend:
+    build:
+      context: ../frontend
+    container_name: payment-router-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    expose:
+      - "80"
+
+  nginx:
+    image: nginx:alpine
+    container_name: payment-router-nginx
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  mysql-data:
+  redis-data:

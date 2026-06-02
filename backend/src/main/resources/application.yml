@@ -1,0 +1,84 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: payment-router-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/payment_router?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:payment_router}
+    password: ${SPRING_DATASOURCE_PASSWORD:payment_router}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+      database: ${SPRING_DATA_REDIS_DATABASE:0}
+      timeout: 3s
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.company.payrouter: DEBUG
+
+pay-router:
+  security:
+    enforce-production-secrets: ${PAY_ROUTER_ENFORCE_PRODUCTION_SECRETS:false}
+  jwt:
+    secret: ${PAY_ROUTER_JWT_SECRET:payment-router-jwt-secret-change-me-at-least-32-bytes}
+    expire-minutes: ${PAY_ROUTER_JWT_EXPIRE_MINUTES:120}
+  crypto:
+    aes-key: ${PAY_ROUTER_AES_KEY:payment-router-local-dev-aes-key-change-me}
+  pay-query:
+    enabled: ${PAY_QUERY_ENABLED:true}
+    interval-seconds: ${PAY_QUERY_INTERVAL_SECONDS:30}
+    max-count: ${PAY_QUERY_MAX_COUNT:10}
+  limit-reservation:
+    enabled: ${PAY_ROUTER_LIMIT_RESERVATION_ENABLED:false}
+    reservation-check-delay-seconds: ${PAY_ROUTER_LIMIT_RESERVATION_CHECK_DELAY_SECONDS:300}
+    compensation-interval-seconds: ${PAY_ROUTER_LIMIT_RESERVATION_COMPENSATION_INTERVAL_SECONDS:60}
+    compensation-batch-size: ${PAY_ROUTER_LIMIT_RESERVATION_COMPENSATION_BATCH_SIZE:100}
+  gateway-security:
+    legacy-pool-sign:
+      enabled: ${PAY_ROUTER_LEGACY_POOL_SIGN_ENABLED:true}
+      fallback-after-default-app-secret-failure: ${PAY_ROUTER_LEGACY_POOL_SIGN_FALLBACK_AFTER_DEFAULT_APP_SECRET_FAILURE:true}
+      warn-only: ${PAY_ROUTER_LEGACY_POOL_SIGN_WARN_ONLY:true}
+      allow-pool-codes: ${PAY_ROUTER_LEGACY_POOL_SIGN_ALLOW_POOL_CODES:}
+      deny-pool-codes: ${PAY_ROUTER_LEGACY_POOL_SIGN_DENY_POOL_CODES:}
+  channel:
+    adapter: ${PAY_ROUTER_CHANNEL_ADAPTER:mock}
+    lfwin:
+      base-url: ${PAY_ROUTER_LFWIN_BASE_URL:https://api2.lfwin.com}
+      timeout-seconds: ${PAY_ROUTER_LFWIN_TIMEOUT_SECONDS:15}
+  init-schema: ${PAY_ROUTER_INIT_SCHEMA:true}
