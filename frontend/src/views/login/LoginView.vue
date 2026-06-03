@@ -12,6 +12,14 @@
         <el-form-item label="密码">
           <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password @keyup.enter="handleLogin" />
         </el-form-item>
+        <el-form-item v-if="captchaRequired" label="图片验证码">
+          <div class="login-captcha-row">
+            <el-input v-model="form.captchaCode" placeholder="请输入验证码结果" @keyup.enter="handleLogin" />
+            <button class="login-captcha-image" type="button" @click="refreshCaptcha">
+              <img v-if="captchaImage" :src="captchaImage" alt="captcha" />
+            </button>
+          </div>
+        </el-form-item>
         <el-button type="primary" native-type="submit" :loading="loading" class="login-button">登录</el-button>
       </el-form>
     </section>
@@ -25,6 +33,8 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
+import { captchaApi, loginStatusApi } from '@/api/auth'
+import type { ApiResult, CaptchaResponse, LoginSecurityStatusResponse } from '@/api/auth'
 import logoUrl from '@/assets/brand/logo.png'
 import loginBgUrl from '@/assets/brand/login-bg.png'
 
@@ -38,8 +48,36 @@ const loginBackgroundStyle = computed(() => ({
 const loading = ref(false)
 const form = reactive({
   username: 'admin',
-  password: ''
+  password: '',
+  captchaId: '',
+  captchaCode: ''
 })
+const captchaRequired = ref(false)
+const captchaImage = ref('')
+
+async function refreshCaptcha() {
+  if (!form.username) {
+    return
+  }
+  const response = await captchaApi(form.username) as unknown as ApiResult<CaptchaResponse>
+  captchaRequired.value = response.data.required
+  form.captchaId = response.data.captchaId || ''
+  form.captchaCode = ''
+  captchaImage.value = response.data.imageBase64 || ''
+}
+
+async function refreshLoginStatus() {
+  if (!form.username) {
+    captchaRequired.value = false
+    captchaImage.value = ''
+    return
+  }
+  const response = await loginStatusApi(form.username) as unknown as ApiResult<LoginSecurityStatusResponse>
+  captchaRequired.value = response.data.captchaRequired
+  if (captchaRequired.value) {
+    await refreshCaptcha()
+  }
+}
 
 async function handleLogin() {
   if (loading.value) {
@@ -52,6 +90,7 @@ async function handleLogin() {
     router.push('/')
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || '登录失败，请检查用户名和密码')
+    await refreshLoginStatus()
   } finally {
     loading.value = false
   }

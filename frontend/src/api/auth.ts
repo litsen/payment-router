@@ -21,8 +21,27 @@ export interface LoginResponse {
   user: CurrentUser
 }
 
-export function loginApi(payload: { username: string; password: string }) {
+export interface CaptchaResponse {
+  required: boolean
+  captchaId?: string
+  imageBase64?: string
+}
+
+export interface LoginSecurityStatusResponse {
+  captchaRequired: boolean
+  locked: boolean
+}
+
+export function loginApi(payload: { username: string; password: string; captchaId?: string; captchaCode?: string }) {
   return http.post<ApiResult<LoginResponse>>('/admin/auth/login', payload)
+}
+
+export function loginStatusApi(username: string) {
+  return http.get<ApiResult<LoginSecurityStatusResponse>>('/admin/auth/login-status', { params: { username } })
+}
+
+export function captchaApi(username: string) {
+  return http.get<ApiResult<CaptchaResponse>>('/admin/auth/captcha', { params: { username } })
 }
 
 export function logoutApi() {

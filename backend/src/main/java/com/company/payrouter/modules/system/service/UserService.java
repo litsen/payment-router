@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.company.payrouter.common.api.PageResult;
 import com.company.payrouter.common.exception.BizException;
+import com.company.payrouter.modules.auth.entity.SysLoginSecurity;
+import com.company.payrouter.modules.auth.service.LoginSecurityService;
 import com.company.payrouter.modules.system.dto.UserDtos.UserCreateRequest;
 import com.company.payrouter.modules.system.dto.UserDtos.UserResponse;
 import com.company.payrouter.modules.system.dto.UserDtos.UserUpdateRequest;
@@ -30,6 +32,7 @@ public class UserService {
     private final RoleService roleService;
     private final OperationLogService operationLogService;
     private final PasswordEncoder passwordEncoder;
+    private final LoginSecurityService loginSecurityService;
 
     public UserService(
             SysUserMapper userMapper,
@@ -37,7 +40,8 @@ public class UserService {
             SysUserRoleMapper userRoleMapper,
             RoleService roleService,
             OperationLogService operationLogService,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            LoginSecurityService loginSecurityService
     ) {
         this.userMapper = userMapper;
         this.roleMapper = roleMapper;
@@ -45,6 +49,7 @@ public class UserService {
         this.roleService = roleService;
         this.operationLogService = operationLogService;
         this.passwordEncoder = passwordEncoder;
+        this.loginSecurityService = loginSecurityService;
     }
 
     public PageResult<UserResponse> pageUsers(long current, long size, String keyword) {
@@ -102,6 +107,7 @@ public class UserService {
         if (roleService.roleCodesByUserId(id).contains("SUPER_ADMIN")) {
             ensureNotLastSuperAdmin(id);
         }
+        loginSecurityService.clearByUsername(user.getUsername());
         userRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, id));
         userMapper.deleteById(id);
         operationLogService.record("DELETE", "USER", id, "删除用户 " + user.getUsername());
@@ -135,13 +141,24 @@ public class UserService {
         userMapper.updateById(user);
     }
 
+    public void unlockLoginLimit(Long userId) {
+        SysUser user = requireUser(userId);
+        loginSecurityService.unlockUser(userId);
+        operationLogService.record("UNLOCK_LOGIN", "USER", userId, "解除登录限制 " + user.getUsername());
+    }
+
     public UserResponse toResponse(SysUser user) {
+        SysLoginSecurity security = loginSecurityService.findByUsername(user.getUsername());
         return new UserResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getRealName(),
                 user.getStatus(),
                 roleService.roleCodesByUserId(user.getId()),
+                security == null ? 0 : security.getFailCount(),
+                security != null && (Boolean.TRUE.equals(security.getUserLocked()) || Boolean.TRUE.equals(security.getIpLocked())),
+                security == null ? null : security.getLockedIp(),
+                security == null ? null : security.getLastFailTime(),
                 user.getLastLoginTime(),
                 user.getCreatedAt()
         );

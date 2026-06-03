@@ -186,6 +186,15 @@ body {
   margin-bottom: 4px;
 }
 
+.login-security-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  color: #475569;
+  font-size: 13px;
+}
+
 .pagination {
   margin-top: 16px;
   justify-content: flex-end;
@@ -495,6 +504,31 @@ body {
 
 .login-button {
   width: 100%;
+}
+
+.login-captcha-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 10px;
+  width: 100%;
+}
+
+.login-captcha-image {
+  display: grid;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  overflow: hidden;
+  background: #f8fbff;
+  border: 1px solid #d5dde9;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.login-captcha-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .login-footer {

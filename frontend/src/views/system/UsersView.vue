@@ -15,9 +15,21 @@
         </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="100" />
-      <el-table-column v-if="authStore.canManageUsers" label="操作" width="160" fixed="right">
+      <el-table-column label="登录安全" min-width="220">
+        <template #default="{ row }">
+          <div class="login-security-cell">
+            <el-tag v-if="row.loginLocked" type="danger" size="small">已锁定</el-tag>
+            <el-tag v-else-if="(row.loginFailCount || 0) >= 3" type="warning" size="small">需验证码</el-tag>
+            <el-tag v-else type="success" size="small">正常</el-tag>
+            <span>失败 {{ row.loginFailCount || 0 }} 次</span>
+            <span v-if="row.lockedIp">IP：{{ row.lockedIp }}</span>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column v-if="authStore.canManageUsers" label="操作" width="230" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+          <el-button v-if="row.loginLocked || row.loginFailCount" link type="warning" @click="unlockLogin(row)">解除限制</el-button>
           <el-button link type="danger" @click="removeUser(row)">删除</el-button>
         </template>
       </el-table-column>
@@ -69,7 +81,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
-import { createUser, deleteUser, listRoles, listUsers, updateUser, type RoleItem, type UserItem } from '@/api/system'
+import { createUser, deleteUser, listRoles, listUsers, unlockUserLoginLimit, updateUser, type RoleItem, type UserItem } from '@/api/system'
 import type { ApiResult } from '@/api/auth'
 import type { PageResult } from '@/api/system'
 
@@ -124,6 +136,13 @@ async function removeUser(user: UserItem) {
   await ElMessageBox.confirm(`确认删除用户 ${user.username}？`, '删除确认', { type: 'warning' })
   await deleteUser(user.id)
   ElMessage.success('删除成功')
+  await fetchUsers()
+}
+
+async function unlockLogin(user: UserItem) {
+  await ElMessageBox.confirm(`确认解除 ${user.username} 的账号和 IP 登录限制？`, '解除登录限制', { type: 'warning' })
+  await unlockUserLoginLimit(user.id)
+  ElMessage.success('已解除登录限制')
   await fetchUsers()
 }
 </script>

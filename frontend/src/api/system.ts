@@ -14,6 +14,10 @@ export interface UserItem {
   realName: string
   status: string
   roles: string[]
+  loginFailCount?: number
+  loginLocked?: boolean
+  lockedIp?: string
+  lastFailTime?: string
   lastLoginTime?: string
   createdAt?: string
 }
@@ -55,6 +59,10 @@ export function updateUser(id: number, payload: { password?: string; realName: s
 
 export function deleteUser(id: number) {
   return http.delete<ApiResult<null>>(`/admin/users/${id}`)
+}
+
+export function unlockUserLoginLimit(id: number) {
+  return http.post<ApiResult<null>>(`/admin/users/${id}/login-lock/unlock`)
 }
 
 export function listRoles() {

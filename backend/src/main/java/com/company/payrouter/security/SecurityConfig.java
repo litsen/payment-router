@@ -47,7 +47,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/webjars/**"
                         ).permitAll()
-                        .requestMatchers("/admin/auth/login").permitAll()
+                        .requestMatchers("/admin/auth/login", "/admin/auth/login-status", "/admin/auth/captcha").permitAll()
                         .requestMatchers(HttpMethod.GET, "/admin/api-docs", "/admin/api-docs/**").hasAuthority("dashboard:view")
                         .requestMatchers("/admin/dashboard/**").hasAuthority("dashboard:view")
                         .requestMatchers(HttpMethod.GET, "/admin/permissions/tree").hasAuthority("system:role:view")

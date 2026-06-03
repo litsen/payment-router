@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('auth', {
     canManageRefunds: state => Boolean(state.user?.permissions.includes('refund:manage'))
   },
   actions: {
-    async login(payload: { username: string; password: string }) {
+    async login(payload: { username: string; password: string; captchaId?: string; captchaCode?: string }) {
       const response = await loginApi(payload) as unknown as ApiResult<LoginResponse>
       this.token = response.data.token
       this.user = response.data.user

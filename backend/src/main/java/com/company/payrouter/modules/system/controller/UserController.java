@@ -50,4 +50,10 @@ public class UserController {
         userService.deleteUser(id);
         return ApiResult.success();
     }
+
+    @PostMapping("/{id}/login-lock/unlock")
+    public ApiResult<Void> unlockLoginLimit(@PathVariable Long id) {
+        userService.unlockLoginLimit(id);
+        return ApiResult.success();
+    }
 }

@@ -16,6 +16,10 @@ public final class UserDtos {
             String realName,
             String status,
             Set<String> roles,
+            Integer loginFailCount,
+            Boolean loginLocked,
+            String lockedIp,
+            LocalDateTime lastFailTime,
             LocalDateTime lastLoginTime,
             LocalDateTime createdAt
     ) {
