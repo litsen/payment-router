@@ -88,6 +88,7 @@ public class PaymentGatewayService {
     private final GatewaySignService signService;
     private final PayRefundOrderMapper refundOrderMapper;
     private final LimitReservationService limitReservationService;
+    private final MerchantNotifyService merchantNotifyService;
 
     public PaymentGatewayService(
             PayOrderMapper orderMapper,
@@ -103,7 +104,8 @@ public class PaymentGatewayService {
             MerchantPoolService poolService,
             GatewaySignService signService,
             PayRefundOrderMapper refundOrderMapper,
-            LimitReservationService limitReservationService
+            LimitReservationService limitReservationService,
+            MerchantNotifyService merchantNotifyService
     ) {
         this.orderMapper = orderMapper;
         this.accountMapper = accountMapper;
@@ -119,6 +121,7 @@ public class PaymentGatewayService {
         this.signService = signService;
         this.refundOrderMapper = refundOrderMapper;
         this.limitReservationService = limitReservationService;
+        this.merchantNotifyService = merchantNotifyService;
     }
 
     @Transactional
@@ -410,6 +413,7 @@ public class PaymentGatewayService {
     }
 
     private void markSuccess(PayOrder order, String upstreamOrderId, String upstreamTradeNo, String upstreamOrderTime, String message) {
+        boolean shouldNotify = !isTerminal(order.getStatus());
         fillUpstream(order, upstreamOrderId, upstreamTradeNo, upstreamOrderTime);
         order.setStatus(STATUS_SUCCESS);
         order.setUpstreamResponseCode("10000");
@@ -418,12 +422,16 @@ public class PaymentGatewayService {
         order.setUpdatedAt(LocalDateTime.now());
         orderMapper.updateById(order);
         limitReservationService.confirm(order.getId());
+        if (shouldNotify) {
+            merchantNotifyService.notifyPaymentResult(order);
+        }
     }
 
     private void markFailed(PayOrder order, String upstreamOrderId, String upstreamTradeNo, String upstreamOrderTime, String message, PayMerchantAccount account) {
         if (STATUS_SUCCESS.equals(order.getStatus())) {
             return;
         }
+        boolean shouldNotify = !isTerminal(order.getStatus());
         fillUpstream(order, upstreamOrderId, upstreamTradeNo, upstreamOrderTime);
         order.setStatus(STATUS_FAILED);
         order.setUpstreamResponseCode("10000");
@@ -433,6 +441,9 @@ public class PaymentGatewayService {
         limitReservationService.release(order.getId(), "ORDER_FAILED");
         if (account != null) {
             routeEngineService.recordFailure(account.getId(), null);
+        }
+        if (shouldNotify) {
+            merchantNotifyService.notifyPaymentResult(order);
         }
     }
 

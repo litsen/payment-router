@@ -6,8 +6,11 @@
     </div>
     <el-table :data="logs" border>
       <el-table-column prop="merchantOrderNo" label="商户订单号" min-width="170" />
+      <el-table-column label="类型" width="100">
+        <template #default="{ row }"><el-tag>{{ directionLabel(row) }}</el-tag></template>
+      </el-table-column>
       <el-table-column label="验签" width="90">
-        <template #default="{ row }"><el-tag :type="row.verified ? 'success' : 'danger'">{{ row.verified ? '通过' : '失败' }}</el-tag></template>
+        <template #default="{ row }"><el-tag :type="row.verified ? 'success' : 'danger'">{{ isOutbound(row) ? '已签名' : row.verified ? '通过' : '失败' }}</el-tag></template>
       </el-table-column>
       <el-table-column label="处理" width="90">
         <template #default="{ row }"><el-tag :type="row.success ? 'success' : 'danger'">{{ row.success ? '成功' : '失败' }}</el-tag></template>
@@ -53,5 +56,21 @@ function openLog(row: NotifyLogItem) {
     logText.value = row.notifyBody || ''
   }
   dialogVisible.value = true
+}
+
+function directionLabel(row: NotifyLogItem) {
+  return isOutbound(row) ? '下游通知' : '上游回调'
+}
+
+function isOutbound(row: NotifyLogItem) {
+  return parseNotifyBody(row).direction === 'OUTBOUND'
+}
+
+function parseNotifyBody(row: NotifyLogItem) {
+  try {
+    return JSON.parse(row.notifyBody || '{}')
+  } catch {
+    return {}
+  }
 }
 </script>
