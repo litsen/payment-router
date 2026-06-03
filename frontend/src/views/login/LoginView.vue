@@ -7,7 +7,7 @@
       </div>
       <el-form :model="form" label-position="top" @submit.prevent="handleLogin">
         <el-form-item label="用户名">
-          <el-input v-model="form.username" placeholder="admin" />
+          <el-input v-model="form.username" placeholder="admin" @blur="refreshLoginStatus" />
         </el-form-item>
         <el-form-item label="密码">
           <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password @keyup.enter="handleLogin" />
@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
@@ -55,10 +55,13 @@ const form = reactive({
 const captchaRequired = ref(false)
 const captchaImage = ref('')
 
+onMounted(refreshLoginStatus)
+
 async function refreshCaptcha() {
   if (!form.username) {
     return
   }
+  captchaRequired.value = true
   const response = await captchaApi(form.username) as unknown as ApiResult<CaptchaResponse>
   captchaRequired.value = response.data.required
   form.captchaId = response.data.captchaId || ''
@@ -76,6 +79,10 @@ async function refreshLoginStatus() {
   captchaRequired.value = response.data.captchaRequired
   if (captchaRequired.value) {
     await refreshCaptcha()
+  } else {
+    form.captchaId = ''
+    form.captchaCode = ''
+    captchaImage.value = ''
   }
 }
 
@@ -89,8 +96,13 @@ async function handleLogin() {
     ElMessage.success('登录成功')
     router.push('/')
   } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || '登录失败，请检查用户名和密码')
-    await refreshLoginStatus()
+    const message = error?.response?.data?.message || '登录失败，请检查用户名和密码'
+    ElMessage.error(message)
+    if (message.includes('验证码')) {
+      await refreshCaptcha()
+    } else {
+      await refreshLoginStatus()
+    }
   } finally {
     loading.value = false
   }
