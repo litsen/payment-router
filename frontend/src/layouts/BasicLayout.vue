@@ -21,6 +21,10 @@
           </el-menu-item>
           <el-menu-item index="/api-docs/scan-pay">
             <el-icon><Document /></el-icon>
+            <span>聚合扫码支付接口</span>
+          </el-menu-item>
+          <el-menu-item index="/api-docs/qrcode-pay">
+            <el-icon><Document /></el-icon>
             <span>扫码支付接口</span>
           </el-menu-item>
           <el-menu-item index="/api-docs/h5-pay">

@@ -76,7 +76,7 @@ public class MockPaymentChannelAdapter implements PaymentChannelAdapter {
     @Override
     public ChannelResponse qrcodePay(QrcodeChannelRequest request, ChannelContext context) {
         String upstreamOrderId = "MOCKQRCODE" + System.currentTimeMillis();
-        return processing(upstreamOrderId, "Mock qrcode payment created", Map.of("qrCode", "mock://qrcode-pay/" + request.channel() + "/" + request.merchantOrderNo()));
+        return processing(upstreamOrderId, "Mock qrcode payment created", Map.of("qrCode", "mock://qrcode-pay/" + request.service() + "/" + request.merchantOrderNo()));
     }
 
     @Override

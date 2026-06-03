@@ -111,7 +111,7 @@ public class GatewaySecurityService {
 
     public PayMerchantPool verifyQrcodeRequest(QrcodePayRequest request) {
         Map<String, Object> params = toSignParams(request);
-        params.put("channel", request.channel());
+        params.put("service", request.service());
         return verifyPayRequest(request, params);
     }
 
@@ -389,7 +389,7 @@ public class GatewaySecurityService {
 
     public Map<String, Object> toParamMap(QrcodePayRequest request) {
         Map<String, Object> values = toParamMap((PayCreateRequest) request);
-        values.put("channel", request.channel());
+        values.put("service", request.service());
         return values;
     }
 

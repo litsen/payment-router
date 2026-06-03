@@ -68,7 +68,7 @@ export interface BarcodePayPayload {
   authCode?: string
   subject: string
   notifyUrl?: string
-  channel?: string
+  service?: string
   returnUrl?: string
   subAppId?: string
   payerId?: string

@@ -55,7 +55,7 @@ public final class ChannelDtos {
             String merchantOrderNo,
             BigDecimal amount,
             String subject,
-            String channel,
+            String service,
             String notifyUrl
     ) {
     }

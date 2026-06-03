@@ -96,7 +96,7 @@ public final class GatewayDtos {
             @NotBlank String merchantOrderNo,
             @NotNull @DecimalMin(value = "0.01") BigDecimal amount,
             @NotBlank String subject,
-            @NotBlank String channel,
+            @NotBlank String service,
             String notifyUrl,
             @NotNull Long timestamp,
             @NotBlank String nonce,

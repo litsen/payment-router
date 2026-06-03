@@ -153,8 +153,8 @@ public class PaymentGatewayService {
             if (request.subAppId() != null) params.put("subAppId", request.subAppId());
             params.put("buyerId", request.payerId());
         }
-        if (PayMethodService.QRCODE_PAY.equals(request.payMethod()) && request.channel() != null) {
-            params.put("channel", request.channel());
+        if (PayMethodService.QRCODE_PAY.equals(request.payMethod()) && request.service() != null) {
+            params.put("service", request.service());
         }
         params.put("timestamp", timestamp);
         params.put("nonce", nonce);
@@ -164,7 +164,7 @@ public class PaymentGatewayService {
             case PayMethodService.BARCODE_PAY -> barcodePay(new BarcodePayRequest(pool.getPoolCode(), request.merchantOrderNo(), request.amount(), request.authCode(), request.subject(), request.notifyUrl(), timestamp, nonce, sign));
             case PayMethodService.PRE_ORDER -> preOrder(new PreOrderRequest(pool.getPoolCode(), request.merchantOrderNo(), request.amount(), request.subject(), request.notifyUrl(), request.returnUrl(), null, timestamp, nonce, sign));
             case PayMethodService.SCAN_PAY -> scanPay(new ScanPayRequest(pool.getPoolCode(), request.merchantOrderNo(), request.amount(), request.subject(), request.notifyUrl(), timestamp, nonce, sign));
-            case PayMethodService.QRCODE_PAY -> qrcodePay(new QrcodePayRequest(pool.getPoolCode(), request.merchantOrderNo(), request.amount(), request.subject(), request.channel(), request.notifyUrl(), timestamp, nonce, sign));
+            case PayMethodService.QRCODE_PAY -> qrcodePay(new QrcodePayRequest(pool.getPoolCode(), request.merchantOrderNo(), request.amount(), request.subject(), request.service(), request.notifyUrl(), timestamp, nonce, sign));
             case PayMethodService.H5_PAY -> h5Pay(new H5PayRequest(pool.getPoolCode(), request.merchantOrderNo(), request.amount(), request.subject(), request.notifyUrl(), request.returnUrl(), timestamp, nonce, sign));
             case PayMethodService.WECHAT_JSAPI_PAY -> wechatJsapiPay(new WechatJsapiPayRequest(pool.getPoolCode(), request.merchantOrderNo(), request.amount(), request.subject(), request.subAppId(), request.payerId(), request.notifyUrl(), timestamp, nonce, sign));
             case PayMethodService.ALIPAY_JSAPI_PAY -> alipayJsapiPay(new AlipayJsapiPayRequest(pool.getPoolCode(), request.merchantOrderNo(), request.amount(), request.subject(), request.subAppId(), request.payerId(), null, request.notifyUrl(), timestamp, nonce, sign));
@@ -248,9 +248,10 @@ public class PaymentGatewayService {
 
     @Transactional
     public PayResponse qrcodePay(QrcodePayRequest request) {
+        validateQrcodeService(request.service());
         PayMerchantPool pool = securityService.verifyQrcodeRequest(request);
         return createPayment(pool, request, PayMethodService.QRCODE_PAY, securityService.toParamMap(request), null, account -> channelAdapter.qrcodePay(
-                new QrcodeChannelRequest(request.merchantOrderNo(), request.amount(), request.subject(), request.channel(), request.notifyUrl()),
+                new QrcodeChannelRequest(request.merchantOrderNo(), request.amount(), request.subject(), request.service(), request.notifyUrl()),
                 context(account)
         ));
     }
@@ -523,7 +524,7 @@ public class PaymentGatewayService {
 
     private Map<String, Object> upstreamPayLog(PayCreateRequest request, String payMethod, PayMerchantAccount account, String authCode) {
         Map<String, Object> values = new java.util.LinkedHashMap<>();
-        values.put("service", lfwinService(payMethod));
+        values.put("service", lfwinService(payMethod, request));
         if (account != null) {
             values.put("accountId", account.getId());
         }
@@ -535,7 +536,10 @@ public class PaymentGatewayService {
         return values;
     }
 
-    private String lfwinService(String payMethod) {
+    private String lfwinService(String payMethod, PayCreateRequest request) {
+        if (PayMethodService.QRCODE_PAY.equals(payMethod) && request instanceof QrcodePayRequest qrcodeRequest) {
+            return qrcodeRequest.service();
+        }
         return switch (payMethod) {
             case PayMethodService.BARCODE_PAY -> "pay.comm.barcode";
             case PayMethodService.SCAN_PAY -> "pay.comm.jspay";
@@ -547,6 +551,17 @@ public class PaymentGatewayService {
             case PayMethodService.ALIPAY_JSAPI_PAY -> "comm.js.pay/comm.mini.pay";
             default -> payMethod;
         };
+    }
+
+    private void validateQrcodeService(String service) {
+        if (!StringUtils.hasText(service)) {
+            throw new BizException(BusinessErrorCode.INVALID_REQUEST_PARAMETER, "service is required");
+        }
+        switch (service) {
+            case "pay.alipay.qrcode", "pay.wxpay.qrcode", "pay.unpay.qrcode" -> {
+            }
+            default -> throw new BizException(BusinessErrorCode.INVALID_REQUEST_PARAMETER, "Unsupported qrcode service");
+        }
     }
 
     @Transactional

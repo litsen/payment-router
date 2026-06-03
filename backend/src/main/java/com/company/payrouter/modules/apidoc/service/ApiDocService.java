@@ -108,8 +108,8 @@ public class ApiDocService {
         ));
         register(doc(
                 "scan-pay",
-                "扫码支付接口",
-                "外部商户系统创建扫码支付订单，系统返回二维码或支付链接参数，后续通过通知或查单更新订单状态。",
+                "聚合扫码支付接口",
+                "外部商户系统创建 LFWin 聚合扫码支付订单，系统调用 /payapi/trans/kxpay，使用 service=pay.comm.jspay，返回二维码或支付链接参数。",
                 """
                         POST /api/pay/scan
                         Content-Type: application/json
@@ -136,7 +136,41 @@ public class ApiDocService {
                             }
                           }
                         }""",
-                "<p>扫码支付创建成功后通常返回 PAYING，商户侧展示 payData 中的二维码内容，后续通过通知或查单确认终态。</p>"
+                "<p>聚合扫码支付创建成功后通常返回 PAYING，商户侧展示 payData 中的 url、qr_code 或 code_url，后续通过通知或查单确认终态。该接口固定映射 LFWin /payapi/trans/kxpay。</p>"
+        ));
+        register(doc(
+                "qrcode-pay",
+                "扫码支付接口",
+                "外部商户系统创建 LFWin 指定通道扫码支付订单，系统调用 /payapi/pay/qrcode，service 必填并参与签名。",
+                """
+                        POST /api/pay/qrcode
+                        Content-Type: application/json
+
+                        {
+                          "appId": "MCH202605300001",
+                          "merchantOrderNo": "Q202605300001",
+                          "amount": 1.00,
+                          "subject": "测试商品",
+                          "service": "pay.wxpay.qrcode",
+                          "notifyUrl": "https://merchant.example.com/pay/notify",
+                          "timestamp": 1790000000000,
+                          "nonce": "random_string",
+                          "sign": "sha256_hex_sign"
+                        }""",
+                """
+                        {
+                          "code": 0,
+                          "message": "success",
+                          "data": {
+                            "payMethod": "QRCODE_PAY",
+                            "status": "PAYING",
+                            "payData": {
+                              "qr_code": "二维码内容",
+                              "code_url": "二维码图片地址"
+                            }
+                          }
+                        }""",
+                "<p>service 仅支持 pay.alipay.qrcode、pay.wxpay.qrcode、pay.unpay.qrcode。创建成功后展示 payData 中的 qr_code、code_url 或 url，后续通过通知或查单确认终态。</p>"
         ));
         register(doc(
                 "h5-pay",
@@ -401,6 +435,7 @@ public class ApiDocService {
         return switch (slug) {
             case "barcode-pay" -> withCommonPayParams(param("authCode", "string", "是", "付款码，通常来自微信、支付宝或银行卡付款码。", "", "288888888888888888"));
             case "scan-pay" -> commonPayParams();
+            case "qrcode-pay" -> withCommonPayParams(param("service", "string", "是", "LFWin 指定通道扫码 service；参与签名。", "pay.alipay.qrcode, pay.wxpay.qrcode, pay.unpay.qrcode", "pay.wxpay.qrcode"));
             case "h5-pay" -> withCommonPayParams(param("returnUrl", "string", "否", "支付完成后的前端跳转地址；传入时参与签名。", "", "https://merchant.example.com/pay/success"));
             case "wechat-jsapi-pay" -> withCommonPayParams(
                     param("subAppId", "string", "是", "微信公众号或小程序 appId。", "", "wx-sub-appid"),
@@ -441,7 +476,7 @@ public class ApiDocService {
 
     private static List<ApiDocParameter> responseParams(String slug) {
         return switch (slug) {
-            case "barcode-pay", "scan-pay", "h5-pay", "wechat-jsapi-pay", "alipay-jsapi-pay", "query-pay" -> payResponseParams();
+            case "barcode-pay", "scan-pay", "qrcode-pay", "h5-pay", "wechat-jsapi-pay", "alipay-jsapi-pay", "query-pay" -> payResponseParams();
             case "refund", "refund-query" -> refundResponseParams();
             case "sign" -> List.of(
                     param("canonicalString", "string", "是", "按 ASCII 排序后拼接出的待签名字符串，末尾直接拼接 appSecret。", "", "amount=1.00&appId=...{appSecret}"),

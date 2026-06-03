@@ -41,6 +41,12 @@ const router = createRouter({
           path: 'api-docs/scan-pay',
           name: 'ScanPayDoc',
           component: () => import('@/views/api-docs/ApiDocView.vue'),
+          meta: { title: '聚合扫码支付接口', permission: 'dashboard:view' }
+        },
+        {
+          path: 'api-docs/qrcode-pay',
+          name: 'QrcodePayDoc',
+          component: () => import('@/views/api-docs/ApiDocView.vue'),
           meta: { title: '扫码支付接口', permission: 'dashboard:view' }
         },
         {

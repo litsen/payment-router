@@ -26,11 +26,11 @@
       <el-form-item v-if="form.payMethod === 'H5_PAY'" label="返回地址">
         <el-input v-model="form.returnUrl" clearable placeholder="可选，支付完成后的跳转地址" />
       </el-form-item>
-      <el-form-item v-if="form.payMethod === 'QRCODE_PAY'" label="指定通道">
-        <el-select v-model="form.channel" class="full-width">
-          <el-option label="微信" value="WECHAT" />
-          <el-option label="支付宝" value="ALIPAY" />
-          <el-option label="云闪付" value="UNIONPAY" />
+      <el-form-item v-if="form.payMethod === 'QRCODE_PAY'" label="service">
+        <el-select v-model="form.service" class="full-width">
+          <el-option label="微信扫码 pay.wxpay.qrcode" value="pay.wxpay.qrcode" />
+          <el-option label="支付宝扫码 pay.alipay.qrcode" value="pay.alipay.qrcode" />
+          <el-option label="云闪付扫码 pay.unpay.qrcode" value="pay.unpay.qrcode" />
         </el-select>
       </el-form-item>
       <el-form-item v-if="form.payMethod === 'WECHAT_JSAPI_PAY' || form.payMethod === 'ALIPAY_JSAPI_PAY'" label="平台 AppId">
@@ -119,7 +119,7 @@ const form = reactive({
   subject: '测试商品',
   merchantOrderNo: nextOrderNo(),
   notifyUrl: '',
-  channel: 'WECHAT',
+  service: 'pay.wxpay.qrcode',
   returnUrl: '',
   subAppId: '',
   payerId: ''
@@ -128,7 +128,7 @@ const form = reactive({
 const canSubmit = computed(() => {
   const baseReady = Boolean(form.poolId && form.payMethod && form.merchantOrderNo && form.amount && form.subject)
   if (form.payMethod === 'BARCODE_PAY') return baseReady && Boolean(form.authCode)
-  if (form.payMethod === 'QRCODE_PAY') return baseReady && Boolean(form.channel)
+  if (form.payMethod === 'QRCODE_PAY') return baseReady && Boolean(form.service)
   if (form.payMethod === 'WECHAT_JSAPI_PAY') return baseReady && Boolean(form.subAppId && form.payerId)
   if (form.payMethod === 'ALIPAY_JSAPI_PAY') return baseReady && Boolean(form.payerId)
   return baseReady
@@ -233,7 +233,7 @@ function buildBarcodePayload() {
     subject: form.subject,
     ...(form.payMethod === 'BARCODE_PAY' ? { authCode: form.authCode } : {}),
     ...(form.notifyUrl ? { notifyUrl: form.notifyUrl } : {}),
-    ...(form.payMethod === 'QRCODE_PAY' ? { channel: form.channel } : {}),
+    ...(form.payMethod === 'QRCODE_PAY' ? { service: form.service } : {}),
     ...(form.returnUrl && form.payMethod === 'H5_PAY' ? { returnUrl: form.returnUrl } : {}),
     ...(form.subAppId && (form.payMethod === 'WECHAT_JSAPI_PAY' || form.payMethod === 'ALIPAY_JSAPI_PAY') ? { subAppId: form.subAppId } : {}),
     ...(form.payerId && (form.payMethod === 'WECHAT_JSAPI_PAY' || form.payMethod === 'ALIPAY_JSAPI_PAY') ? { payerId: form.payerId } : {})

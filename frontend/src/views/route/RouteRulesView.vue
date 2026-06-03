@@ -151,8 +151,8 @@ const payMethodOptions = [
   { label: '统一收银台', value: 'PRE_ORDER' },
   { label: '条码支付：商户扫顾客付款码', value: 'BARCODE_PAY' },
   { label: '条码支付前解码', value: 'DECODE_BAR' },
-  { label: '扫码支付：顾客扫商户二维码', value: 'SCAN_PAY' },
-  { label: '指定通道二维码', value: 'QRCODE_PAY' },
+  { label: '聚合扫码支付接口', value: 'SCAN_PAY' },
+  { label: '扫码支付接口', value: 'QRCODE_PAY' },
   { label: 'H5/链接跳转支付', value: 'H5_PAY' },
   { label: '微信公众号和小程序支付', value: 'WECHAT_JSAPI_PAY' },
   { label: '支付宝生活号和小程序支付', value: 'ALIPAY_JSAPI_PAY' }

@@ -275,6 +275,15 @@
             <input id="returnUrl" autocomplete="off" placeholder="https://merchant.example.com/pay/success" />
           </div>
 
+          <div class="field qrcode-field">
+            <label for="service">service</label>
+            <select id="service">
+              <option value="pay.wxpay.qrcode">pay.wxpay.qrcode（微信扫码）</option>
+              <option value="pay.alipay.qrcode">pay.alipay.qrcode（支付宝扫码）</option>
+              <option value="pay.unpay.qrcode">pay.unpay.qrcode（云闪付扫码）</option>
+            </select>
+          </div>
+
           <div class="field sub-app-id-field">
             <label for="subAppId">subAppId</label>
             <input id="subAppId" autocomplete="off" />
@@ -353,10 +362,17 @@
           numberField: "amount"
         },
         scan: {
-          label: "扫码支付",
+          label: "聚合扫码支付接口",
           path: "/api/pay/scan",
           methodCode: "SCAN_PAY",
           fields: ["payment"],
+          numberField: "amount"
+        },
+        qrcode: {
+          label: "扫码支付接口",
+          path: "/api/pay/qrcode",
+          methodCode: "QRCODE_PAY",
+          fields: ["payment", "qrcode"],
           numberField: "amount"
         },
         h5: {
@@ -415,6 +431,7 @@
         "notifyUrl",
         "authCode",
         "returnUrl",
+        "service",
         "subAppId",
         "subOpenId",
         "buyerId",
@@ -478,7 +495,7 @@
       function updateVisibility() {
         const type = currentType();
         el.endpoint.textContent = "POST " + type.path;
-        const groups = ["payment", "barcode", "h5", "wechat", "alipay", "refund", "refundQuery"];
+        const groups = ["payment", "barcode", "h5", "qrcode", "wechat", "alipay", "refund", "refundQuery"];
         for (const group of groups) {
           document.querySelectorAll("." + toKebab(group) + "-field").forEach((node) => {
             node.style.display = type.fields.includes(group) ? "" : "none";
@@ -505,6 +522,7 @@
         const prefix = {
           BARCODE_PAY: "P",
           SCAN_PAY: "S",
+          QRCODE_PAY: "Q",
           H5_PAY: "H",
           WECHAT_JSAPI_PAY: "J",
           ALIPAY_JSAPI_PAY: "A",
@@ -582,6 +600,9 @@
         if (type.fields.includes("h5")) {
           optional(params, "returnUrl", textValue("returnUrl"));
         }
+        if (type.fields.includes("qrcode")) {
+          params.service = textValue("service");
+        }
         if (type.fields.includes("wechat")) {
           params.subAppId = textValue("subAppId");
           params.subOpenId = textValue("subOpenId");
@@ -615,6 +636,7 @@
           }
         }
         if (type.fields.includes("barcode") && !params.authCode) missing.push("authCode");
+        if (type.fields.includes("qrcode") && !params.service) missing.push("service");
         if (type.fields.includes("wechat")) {
           if (!params.subAppId) missing.push("subAppId");
           if (!params.subOpenId) missing.push("subOpenId");

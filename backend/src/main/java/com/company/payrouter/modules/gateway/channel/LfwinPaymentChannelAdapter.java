@@ -134,7 +134,7 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
     @Override
     public ChannelResponse qrcodePay(QrcodeChannelRequest request, ChannelContext context) {
         Map<String, String> params = new LinkedHashMap<>();
-        params.put("service", qrcodeService(request.channel()));
+        params.put("service", request.service());
         params.put("apikey", context.apiKey());
         params.put("money", money(request.amount()));
         params.put("mch_orderid", request.merchantOrderNo());
@@ -457,15 +457,6 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         return StringUtils.hasText(firstText(values, "refund_status", "refundStatus"))
                 || StringUtils.hasText(firstText(values, "refund_orderid", "refund_order_id"))
                 || StringUtils.hasText(values.get("mch_refund_no"));
-    }
-
-    private String qrcodeService(String channel) {
-        String normalized = channel == null ? "" : channel.trim().toUpperCase();
-        return switch (normalized) {
-            case "ALIPAY" -> "pay.alipay.qrcode";
-            case "UNIONPAY", "UNPAY" -> "pay.unpay.qrcode";
-            default -> "pay.wxpay.qrcode";
-        };
     }
 
     private void copyIfPresent(Map<String, String> source, Map<String, String> target, String key) {

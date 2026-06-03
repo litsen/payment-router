@@ -100,7 +100,7 @@ public final class RouteDtos {
             @NotBlank String subject,
             @NotBlank String merchantOrderNo,
             String notifyUrl,
-            String channel,
+            String service,
             String returnUrl,
             String subAppId,
             String payerId
