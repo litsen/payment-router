@@ -127,6 +127,14 @@ public class UserService {
         userMapper.updateById(user);
     }
 
+    public void changePassword(Long userId, String password) {
+        SysUser user = new SysUser();
+        user.setId(userId);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setUpdatedAt(LocalDateTime.now());
+        userMapper.updateById(user);
+    }
+
     public UserResponse toResponse(SysUser user) {
         return new UserResponse(
                 user.getId(),

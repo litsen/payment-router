@@ -138,8 +138,25 @@
       <el-header class="app-header">
         <div class="page-title">{{ currentTitle }}</div>
         <div class="header-actions">
-          <span class="current-user">{{ authStore.user?.realName || authStore.user?.username }}</span>
-          <el-button size="small" @click="handleLogout">退出</el-button>
+          <el-dropdown trigger="hover" @command="handleUserMenu">
+            <button class="user-menu-trigger" type="button">
+              <el-icon><User /></el-icon>
+              <span>{{ authStore.user?.realName || authStore.user?.username }}</span>
+              <el-icon class="user-menu-arrow"><ArrowDown /></el-icon>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="password">
+                  <el-icon><Lock /></el-icon>
+                  修改密码
+                </el-dropdown-item>
+                <el-dropdown-item command="logout" divided>
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </el-header>
       <el-main class="app-main">
@@ -147,19 +164,39 @@
       </el-main>
     </el-container>
   </el-container>
+
+  <el-dialog v-model="passwordDialogVisible" title="修改密码" width="420px" destroy-on-close>
+    <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-width="90px">
+      <el-form-item label="原密码" prop="oldPassword">
+        <el-input v-model="passwordForm.oldPassword" type="password" show-password autocomplete="current-password" />
+      </el-form-item>
+      <el-form-item label="新密码" prop="newPassword">
+        <el-input v-model="passwordForm.newPassword" type="password" show-password autocomplete="new-password" />
+      </el-form-item>
+      <el-form-item label="确认密码" prop="confirmPassword">
+        <el-input v-model="passwordForm.confirmPassword" type="password" show-password autocomplete="new-password" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="passwordDialogVisible = false">取消</el-button>
+      <el-button type="primary" :loading="passwordSubmitting" @click="submitChangePassword">保存</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Aim,
+  ArrowDown,
   CreditCard,
   DataBoard,
   Document,
   Files,
   Key,
   List,
+  Lock,
   Memo,
   MessageBox,
   Notebook,
@@ -176,6 +213,9 @@ import {
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import logoUrl from '@/assets/brand/logo.png'
+import { changePasswordApi } from '@/api/auth'
+import type { FormInstance, FormRules } from 'element-plus'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
@@ -188,6 +228,64 @@ const showMerchantMenu = computed(
 )
 const showRouteMenu = computed(() => authStore.canViewRouteRules || authStore.canViewRouteRecords || authStore.canTestRoute)
 const showOrderMenu = computed(() => authStore.canViewOrders || authStore.canViewRefunds || authStore.canViewOrderLogs)
+const passwordDialogVisible = ref(false)
+const passwordSubmitting = ref(false)
+const passwordFormRef = ref<FormInstance>()
+const passwordForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const passwordRules: FormRules = {
+  oldPassword: [{ required: true, message: '请输入原密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, max: 64, message: '密码长度为 6-64 位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    {
+      validator: (_rule, value, callback) => {
+        if (value !== passwordForm.newPassword) {
+          callback(new Error('两次输入的新密码不一致'))
+          return
+        }
+        callback()
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+function handleUserMenu(command: string) {
+  if (command === 'password') {
+    openPasswordDialog()
+  } else if (command === 'logout') {
+    handleLogout()
+  }
+}
+
+function openPasswordDialog() {
+  Object.assign(passwordForm, { oldPassword: '', newPassword: '', confirmPassword: '' })
+  passwordDialogVisible.value = true
+}
+
+async function submitChangePassword() {
+  await passwordFormRef.value?.validate()
+  passwordSubmitting.value = true
+  try {
+    await changePasswordApi({
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword
+    })
+    ElMessage.success('密码已修改，请重新登录')
+    passwordDialogVisible.value = false
+    authStore.clearSession()
+    router.push('/login')
+  } finally {
+    passwordSubmitting.value = false
+  }
+}
 
 async function handleLogout() {
   await authStore.logout()

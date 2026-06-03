@@ -1,6 +1,7 @@
 package com.company.payrouter.modules.auth.controller;
 
 import com.company.payrouter.common.api.ApiResult;
+import com.company.payrouter.modules.auth.dto.ChangePasswordRequest;
 import com.company.payrouter.modules.auth.dto.CurrentUserResponse;
 import com.company.payrouter.modules.auth.dto.LoginRequest;
 import com.company.payrouter.modules.auth.dto.LoginResponse;
@@ -31,6 +32,12 @@ public class AuthController {
     @PostMapping("/logout")
     public ApiResult<Void> logout(@AuthenticationPrincipal AuthUser user) {
         authService.logout(user);
+        return ApiResult.success();
+    }
+
+    @PostMapping("/change-password")
+    public ApiResult<Void> changePassword(@AuthenticationPrincipal AuthUser user, @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(user, request);
         return ApiResult.success();
     }
 

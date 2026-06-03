@@ -113,6 +113,30 @@ body {
   font-size: 14px;
 }
 
+.user-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  color: #475569;
+  font: inherit;
+  font-size: 14px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.user-menu-trigger:hover {
+  color: #246bfe;
+  background: #f3f6ff;
+}
+
+.user-menu-arrow {
+  font-size: 12px;
+}
+
 .page-panel {
   min-height: 240px;
   padding: 24px;

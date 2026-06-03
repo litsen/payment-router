@@ -1,6 +1,7 @@
 package com.company.payrouter.modules.auth.service;
 
 import com.company.payrouter.common.exception.BizException;
+import com.company.payrouter.modules.auth.dto.ChangePasswordRequest;
 import com.company.payrouter.modules.auth.dto.CurrentUserResponse;
 import com.company.payrouter.modules.auth.dto.LoginRequest;
 import com.company.payrouter.modules.auth.dto.LoginResponse;
@@ -57,6 +58,18 @@ public class AuthService {
         if (user != null) {
             operationLogService.record("LOGOUT", "AUTH", user.userId(), "用户退出 " + user.username());
         }
+    }
+
+    public void changePassword(AuthUser authUser, ChangePasswordRequest request) {
+        if (authUser == null) {
+            throw new BizException(401, "未登录");
+        }
+        SysUser user = userService.requireUser(authUser.userId());
+        if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
+            throw new BizException("原密码错误");
+        }
+        userService.changePassword(user.getId(), request.newPassword());
+        operationLogService.record("CHANGE_PASSWORD", "AUTH", user.getId(), "修改密码 " + user.getUsername());
     }
 
     public AuthUser loadAuthUser(Long userId) {
