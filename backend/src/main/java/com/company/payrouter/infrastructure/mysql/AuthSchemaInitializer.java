@@ -538,9 +538,9 @@ public class AuthSchemaInitializer implements ApplicationRunner {
     private void seedSystemSettings() {
         insertSetting("siteName", "支付路由后台");
         insertSetting("copyrightText", "Copyright © xxx公司");
-        insertSetting("logoUrl", "");
-        insertSetting("loginBackgroundUrl", "");
-        insertSetting("faviconUrl", "");
+        insertSetting("logoUrl", "/brand/logo.png");
+        insertSetting("loginBackgroundUrl", "/brand/login-bg.png");
+        insertSetting("faviconUrl", "/brand/logo.png");
     }
 
     private void seedAdminUser() {
@@ -578,6 +578,12 @@ public class AuthSchemaInitializer implements ApplicationRunner {
 
     private void insertSetting(String key, String value) {
         jdbcTemplate.update("INSERT IGNORE INTO sys_setting (setting_key, setting_value) VALUES (?, ?)", key, value);
+        jdbcTemplate.update("""
+                UPDATE sys_setting
+                SET setting_value = ?
+                WHERE setting_key = ?
+                  AND (setting_value IS NULL OR setting_value = '')
+                """, value, key);
     }
 
     private void addColumnIfMissing(String tableName, String columnName, String definition) {

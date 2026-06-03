@@ -5,9 +5,9 @@ import type { ApiResult } from '@/api/auth'
 const DEFAULT_SETTINGS: SystemSettings = {
   siteName: '支付路由后台',
   copyrightText: 'Copyright © xxx公司',
-  logoUrl: '',
-  loginBackgroundUrl: '',
-  faviconUrl: ''
+  logoUrl: '/brand/logo.png',
+  loginBackgroundUrl: '/brand/login-bg.png',
+  faviconUrl: '/brand/logo.png'
 }
 
 export const useAppStore = defineStore('app', {

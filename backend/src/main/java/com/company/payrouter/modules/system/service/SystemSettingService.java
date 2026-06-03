@@ -96,7 +96,9 @@ public class SystemSettingService {
         Map<String, String> settings = defaults();
         List<SysSetting> rows = settingMapper.selectList(new LambdaQueryWrapper<SysSetting>()
                 .in(SysSetting::getSettingKey, settings.keySet()));
-        Map<String, String> saved = rows.stream().collect(Collectors.toMap(SysSetting::getSettingKey, setting -> clean(setting.getSettingValue())));
+        Map<String, String> saved = rows.stream()
+                .filter(setting -> StringUtils.hasText(setting.getSettingValue()))
+                .collect(Collectors.toMap(SysSetting::getSettingKey, setting -> clean(setting.getSettingValue())));
         settings.replaceAll((key, value) -> saved.getOrDefault(key, value));
         return settings;
     }
@@ -105,9 +107,9 @@ public class SystemSettingService {
         Map<String, String> defaults = new LinkedHashMap<>();
         defaults.put(SITE_NAME, "支付路由后台");
         defaults.put(COPYRIGHT_TEXT, "Copyright © xxx公司");
-        defaults.put(LOGO_URL, "");
-        defaults.put(LOGIN_BACKGROUND_URL, "");
-        defaults.put(FAVICON_URL, "");
+        defaults.put(LOGO_URL, "/brand/logo.png");
+        defaults.put(LOGIN_BACKGROUND_URL, "/brand/login-bg.png");
+        defaults.put(FAVICON_URL, "/brand/logo.png");
         return defaults;
     }
 

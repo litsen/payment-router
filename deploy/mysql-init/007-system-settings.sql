@@ -8,9 +8,16 @@ CREATE TABLE IF NOT EXISTS sys_setting (
 INSERT IGNORE INTO sys_setting (setting_key, setting_value) VALUES
 ('siteName', '支付路由后台'),
 ('copyrightText', 'Copyright © xxx公司'),
-('logoUrl', ''),
-('loginBackgroundUrl', ''),
-('faviconUrl', '');
+('logoUrl', '/brand/logo.png'),
+('loginBackgroundUrl', '/brand/login-bg.png'),
+('faviconUrl', '/brand/logo.png');
+
+UPDATE sys_setting SET setting_value = '/brand/logo.png'
+WHERE setting_key = 'logoUrl' AND (setting_value IS NULL OR setting_value = '');
+UPDATE sys_setting SET setting_value = '/brand/login-bg.png'
+WHERE setting_key = 'loginBackgroundUrl' AND (setting_value IS NULL OR setting_value = '');
+UPDATE sys_setting SET setting_value = '/brand/logo.png'
+WHERE setting_key = 'faviconUrl' AND (setting_value IS NULL OR setting_value = '');
 
 INSERT IGNORE INTO sys_permission (permission_code, permission_name) VALUES
 ('system:settings:view', 'View system settings'),
