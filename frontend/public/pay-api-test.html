@@ -260,7 +260,7 @@
             <input id="subject" autocomplete="off" value="测试商品" />
           </div>
 
-          <div class="field payment-field refund-field full">
+          <div class="field notify-field full">
             <label for="notifyUrl">notifyUrl</label>
             <input id="notifyUrl" autocomplete="off" placeholder="https://merchant.example.com/pay/notify" />
           </div>
@@ -365,35 +365,35 @@
           label: "聚合扫码支付接口",
           path: "/api/pay/scan",
           methodCode: "SCAN_PAY",
-          fields: ["payment"],
+          fields: ["payment", "notify"],
           numberField: "amount"
         },
         qrcode: {
           label: "扫码支付接口",
           path: "/api/pay/qrcode",
           methodCode: "QRCODE_PAY",
-          fields: ["payment", "qrcode"],
+          fields: ["payment", "qrcode", "notify"],
           numberField: "amount"
         },
         h5: {
           label: "H5/链接跳转支付",
           path: "/api/pay/h5",
           methodCode: "H5_PAY",
-          fields: ["payment", "h5"],
+          fields: ["payment", "h5", "notify"],
           numberField: "amount"
         },
         wechat: {
           label: "微信 JSAPI 支付",
           path: "/api/pay/wechat-jsapi",
           methodCode: "WECHAT_JSAPI_PAY",
-          fields: ["payment", "wechat"],
+          fields: ["payment", "wechat", "notify"],
           numberField: "amount"
         },
         alipay: {
           label: "支付宝 JSAPI 支付",
           path: "/api/pay/alipay-jsapi",
           methodCode: "ALIPAY_JSAPI_PAY",
-          fields: ["payment", "alipay"],
+          fields: ["payment", "alipay", "notify"],
           numberField: "amount"
         },
         query: {
@@ -407,7 +407,7 @@
           label: "退款",
           path: "/api/pay/refund",
           methodCode: "REFUND",
-          fields: ["refund"],
+          fields: ["refund", "notify"],
           numberField: "refundAmount"
         },
         refundQuery: {
@@ -495,7 +495,7 @@
       function updateVisibility() {
         const type = currentType();
         el.endpoint.textContent = "POST " + type.path;
-        const groups = ["payment", "barcode", "h5", "qrcode", "wechat", "alipay", "refund", "refundQuery"];
+        const groups = ["payment", "notify", "barcode", "h5", "qrcode", "wechat", "alipay", "refund", "refundQuery"];
         for (const group of groups) {
           document.querySelectorAll("." + toKebab(group) + "-field").forEach((node) => {
             node.style.display = type.fields.includes(group) ? "" : "none";
@@ -592,6 +592,8 @@
         if (type.fields.includes("payment")) {
           params.amount = decimalValue("amount");
           params.subject = textValue("subject");
+        }
+        if (type.fields.includes("notify")) {
           optional(params, "notifyUrl", textValue("notifyUrl"));
         }
         if (type.fields.includes("barcode")) {
@@ -616,7 +618,6 @@
           optional(params, "merchantRefundNo", textValue("merchantRefundNo"));
           params.refundAmount = decimalValue("amount");
           optional(params, "reason", textValue("reason"));
-          optional(params, "notifyUrl", textValue("notifyUrl"));
         }
         if (type.fields.includes("refundQuery")) {
           optional(params, "merchantRefundNo", textValue("merchantRefundNo"));
