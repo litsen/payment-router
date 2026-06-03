@@ -10,9 +10,9 @@
           <el-input v-model="form.username" placeholder="admin" />
         </el-form-item>
         <el-form-item label="密码">
-          <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
+          <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password @keyup.enter="handleLogin" />
         </el-form-item>
-        <el-button type="primary" :loading="loading" class="login-button" @click="handleLogin">登录</el-button>
+        <el-button type="primary" native-type="submit" :loading="loading" class="login-button">登录</el-button>
       </el-form>
     </section>
     <footer class="login-footer">{{ appStore.copyrightText }}</footer>
@@ -42,6 +42,9 @@ const form = reactive({
 })
 
 async function handleLogin() {
+  if (loading.value) {
+    return
+  }
   loading.value = true
   try {
     await authStore.login(form)
