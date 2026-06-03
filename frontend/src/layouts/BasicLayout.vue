@@ -2,8 +2,8 @@
   <el-container class="app-shell">
     <el-aside class="app-sidebar" width="220px">
       <div class="brand">
-        <img :src="logoUrl" alt="Payment Router" class="brand-logo" />
-        <span>支付路由后台</span>
+        <img :src="displayLogoUrl" alt="Payment Router" class="brand-logo" />
+        <span>{{ appStore.name }}</span>
       </div>
       <el-menu router :default-active="route.path" class="sidebar-menu">
         <el-menu-item index="/">
@@ -131,6 +131,10 @@
             <el-icon><Key /></el-icon>
             <span>角色管理</span>
           </el-menu-item>
+          <el-menu-item v-if="authStore.canViewSystemSettings" index="/system/settings">
+            <el-icon><Setting /></el-icon>
+            <span>系统设置</span>
+          </el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -212,6 +216,7 @@ import {
   Warning
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
+import { useAppStore } from '@/stores/app'
 import logoUrl from '@/assets/brand/logo.png'
 import { changePasswordApi } from '@/api/auth'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -220,9 +225,11 @@ import { ElMessage } from 'element-plus'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const appStore = useAppStore()
 const currentTitle = computed(() => route.meta.title ?? '首页')
 const showApiDocsMenu = computed(() => authStore.canViewDashboard)
-const showSystemMenu = computed(() => authStore.canViewUsers || authStore.canViewRoles)
+const showSystemMenu = computed(() => authStore.canViewUsers || authStore.canViewRoles || authStore.canViewSystemSettings)
+const displayLogoUrl = computed(() => appStore.logoUrl || logoUrl)
 const showMerchantMenu = computed(
   () => authStore.canViewMerchantPools || authStore.canViewMerchantAccounts || authStore.canViewPayMethods
 )

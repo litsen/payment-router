@@ -19,6 +19,10 @@ spring:
       password: ${SPRING_DATA_REDIS_PASSWORD:}
       database: ${SPRING_DATA_REDIS_DATABASE:0}
       timeout: 3s
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
 
 mybatis-plus:
   configuration:
@@ -82,3 +86,5 @@ pay-router:
       base-url: ${PAY_ROUTER_LFWIN_BASE_URL:https://api2.lfwin.com}
       timeout-seconds: ${PAY_ROUTER_LFWIN_TIMEOUT_SECONDS:15}
   init-schema: ${PAY_ROUTER_INIT_SCHEMA:true}
+  upload:
+    dir: ${PAY_ROUTER_UPLOAD_DIR:/app/uploads}

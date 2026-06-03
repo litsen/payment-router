@@ -192,6 +192,12 @@ const router = createRouter({
           name: 'SystemRoles',
           component: () => import('@/views/system/RolesView.vue'),
           meta: { title: '角色管理', permission: 'system:role:view' }
+        },
+        {
+          path: 'system/settings',
+          name: 'SystemSettings',
+          component: () => import('@/views/system/SystemSettingsView.vue'),
+          meta: { title: '系统设置', permission: 'system:settings:view' }
         }
       ]
     }

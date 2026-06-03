@@ -2,8 +2,8 @@
   <main class="login-page" :style="loginBackgroundStyle">
     <section class="login-card">
       <div class="login-brand">
-        <img :src="logoUrl" alt="Payment Router" class="login-logo" />
-        <h1>支付路由后台</h1>
+        <img :src="displayLogoUrl" alt="Payment Router" class="login-logo" />
+        <h1>{{ appStore.name }}</h1>
       </div>
       <el-form :model="form" label-position="top" @submit.prevent="handleLogin">
         <el-form-item label="用户名">
@@ -15,22 +15,26 @@
         <el-button type="primary" :loading="loading" class="login-button" @click="handleLogin">登录</el-button>
       </el-form>
     </section>
+    <footer class="login-footer">{{ appStore.copyrightText }}</footer>
   </main>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import { useAppStore } from '@/stores/app'
 import logoUrl from '@/assets/brand/logo.png'
 import loginBgUrl from '@/assets/brand/login-bg.png'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const loginBackgroundStyle = {
-  backgroundImage: `url(${loginBgUrl})`
-}
+const appStore = useAppStore()
+const displayLogoUrl = computed(() => appStore.logoUrl || logoUrl)
+const loginBackgroundStyle = computed(() => ({
+  backgroundImage: `url(${appStore.loginBackgroundUrl || loginBgUrl})`
+}))
 const loading = ref(false)
 const form = reactive({
   username: 'admin',

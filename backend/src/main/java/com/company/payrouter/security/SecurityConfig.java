@@ -39,6 +39,8 @@ public class SecurityConfig {
                                 "/api/docs",
                                 "/api/docs/**",
                                 "/api/pay/**",
+                                "/api/system-settings",
+                                "/uploads/**",
                                 "/actuator/**",
                                 "/doc.html",
                                 "/swagger-ui/**",
@@ -49,6 +51,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/admin/api-docs", "/admin/api-docs/**").hasAuthority("dashboard:view")
                         .requestMatchers("/admin/dashboard/**").hasAuthority("dashboard:view")
                         .requestMatchers(HttpMethod.GET, "/admin/permissions/tree").hasAuthority("system:role:view")
+                        .requestMatchers(HttpMethod.GET, "/admin/system-settings").hasAuthority("system:settings:view")
+                        .requestMatchers("/admin/system-settings/**", "/admin/system-settings").hasAuthority("system:settings:manage")
                         .requestMatchers(HttpMethod.GET, "/admin/users/**").hasAuthority("system:user:view")
                         .requestMatchers("/admin/users/**").hasAuthority("system:user:manage")
                         .requestMatchers(HttpMethod.GET, "/admin/roles/**").hasAuthority("system:role:view")

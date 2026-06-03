@@ -25,6 +25,7 @@ frontend/vite.config.d.ts
 deploy/mysql-data/
 deploy/redis-data/
 deploy/logs/
+deploy/uploads/
 deploy/.env
 deploy/.env.production
 deploy/.env.smoke.local

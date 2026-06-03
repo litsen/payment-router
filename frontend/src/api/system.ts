@@ -33,6 +33,14 @@ export interface PermissionNode {
   children?: PermissionNode[]
 }
 
+export interface SystemSettings {
+  siteName: string
+  copyrightText: string
+  logoUrl: string
+  loginBackgroundUrl: string
+  faviconUrl: string
+}
+
 export function listUsers(params: { current: number; size: number; keyword?: string }) {
   return http.get<ApiResult<PageResult<UserItem>>>('/admin/users', { params })
 }
@@ -67,4 +75,22 @@ export function updateRole(id: number, payload: { roleName: string; description?
 
 export function deleteRole(id: number) {
   return http.delete<ApiResult<null>>(`/admin/roles/${id}`)
+}
+
+export function publicSystemSettings() {
+  return http.get<ApiResult<SystemSettings>>('/api/system-settings')
+}
+
+export function getSystemSettings() {
+  return http.get<ApiResult<SystemSettings>>('/admin/system-settings')
+}
+
+export function updateSystemSettings(payload: SystemSettings) {
+  return http.put<ApiResult<SystemSettings>>('/admin/system-settings', payload)
+}
+
+export function uploadSystemAsset(type: 'logo' | 'loginBackground' | 'favicon', file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return http.post<ApiResult<{ url: string }>>(`/admin/system-settings/assets/${type}`, formData)
 }

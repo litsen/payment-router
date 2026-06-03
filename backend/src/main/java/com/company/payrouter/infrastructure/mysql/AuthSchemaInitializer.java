@@ -34,6 +34,7 @@ public class AuthSchemaInitializer implements ApplicationRunner {
             return;
         }
         createTables();
+        seedSystemSettings();
         seedPermissions();
         seedRoles();
         seedRolePermissions();
@@ -98,6 +99,14 @@ public class AuthSchemaInitializer implements ApplicationRunner {
                     target_id VARCHAR(64) NULL,
                     content VARCHAR(512) NULL,
                     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """);
+        jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS sys_setting (
+                    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                    setting_key VARCHAR(128) NOT NULL UNIQUE,
+                    setting_value TEXT NULL,
+                    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """);
         jdbcTemplate.execute("""
@@ -390,6 +399,8 @@ public class AuthSchemaInitializer implements ApplicationRunner {
         insertPermission("system:user:manage", "Manage users");
         insertPermission("system:role:view", "View roles");
         insertPermission("system:role:manage", "Manage roles");
+        insertPermission("system:settings:view", "View system settings");
+        insertPermission("system:settings:manage", "Manage system settings");
         insertPermission("merchant:pool:view", "View merchant pools");
         insertPermission("merchant:pool:manage", "Manage merchant pools");
         insertPermission("merchant:account:view", "View merchant accounts");
@@ -421,6 +432,8 @@ public class AuthSchemaInitializer implements ApplicationRunner {
         grant("SUPER_ADMIN", "system:user:manage");
         grant("SUPER_ADMIN", "system:role:view");
         grant("SUPER_ADMIN", "system:role:manage");
+        grant("SUPER_ADMIN", "system:settings:view");
+        grant("SUPER_ADMIN", "system:settings:manage");
         grant("SUPER_ADMIN", "merchant:pool:view");
         grant("SUPER_ADMIN", "merchant:pool:manage");
         grant("SUPER_ADMIN", "merchant:account:view");
@@ -522,6 +535,14 @@ public class AuthSchemaInitializer implements ApplicationRunner {
         });
     }
 
+    private void seedSystemSettings() {
+        insertSetting("siteName", "支付路由后台");
+        insertSetting("copyrightText", "Copyright © xxx公司");
+        insertSetting("logoUrl", "");
+        insertSetting("loginBackgroundUrl", "");
+        insertSetting("faviconUrl", "");
+    }
+
     private void seedAdminUser() {
         Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sys_user WHERE username = 'admin'", Integer.class);
         if (count != null && count > 0) {
@@ -553,6 +574,10 @@ public class AuthSchemaInitializer implements ApplicationRunner {
                 sortOrder,
                 remark
         );
+    }
+
+    private void insertSetting(String key, String value) {
+        jdbcTemplate.update("INSERT IGNORE INTO sys_setting (setting_key, setting_value) VALUES (?, ?)", key, value);
     }
 
     private void addColumnIfMissing(String tableName, String columnName, String definition) {

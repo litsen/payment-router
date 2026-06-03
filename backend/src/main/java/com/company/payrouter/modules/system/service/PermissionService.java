@@ -42,7 +42,9 @@ public class PermissionService {
                     "system:user:view",
                     "system:user:manage",
                     "system:role:view",
-                    "system:role:manage"
+                    "system:role:manage",
+                    "system:settings:view",
+                    "system:settings:manage"
             ))
     );
 
@@ -113,6 +115,8 @@ public class PermissionService {
             case "system:user:manage" -> "管理用户";
             case "system:role:view" -> "查看角色";
             case "system:role:manage" -> "管理角色";
+            case "system:settings:view" -> "查看系统设置";
+            case "system:settings:manage" -> "管理系统设置";
             default -> fallback;
         };
     }

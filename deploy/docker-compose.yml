@@ -84,9 +84,11 @@ services:
       PAY_ROUTER_LEGACY_POOL_SIGN_WARN_ONLY: ${PAY_ROUTER_LEGACY_POOL_SIGN_WARN_ONLY:-true}
       PAY_ROUTER_LEGACY_POOL_SIGN_ALLOW_POOL_CODES: ${PAY_ROUTER_LEGACY_POOL_SIGN_ALLOW_POOL_CODES:-}
       PAY_ROUTER_LEGACY_POOL_SIGN_DENY_POOL_CODES: ${PAY_ROUTER_LEGACY_POOL_SIGN_DENY_POOL_CODES:-}
+      PAY_ROUTER_UPLOAD_DIR: ${PAY_ROUTER_UPLOAD_DIR:-/app/uploads}
       LOG_PATH: ${BACKEND_LOG_PATH:-/app/logs}
     volumes:
       - ./logs/backend:/app/logs
+      - ./uploads:/app/uploads
 
   frontend:
     build:
