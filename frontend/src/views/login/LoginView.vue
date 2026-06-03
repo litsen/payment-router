@@ -10,7 +10,7 @@
           <el-input v-model="form.username" placeholder="admin" />
         </el-form-item>
         <el-form-item label="密码">
-          <el-input v-model="form.password" type="password" placeholder="admin123" show-password />
+          <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
         </el-form-item>
         <el-button type="primary" :loading="loading" class="login-button" @click="handleLogin">登录</el-button>
       </el-form>
@@ -34,7 +34,7 @@ const loginBackgroundStyle = {
 const loading = ref(false)
 const form = reactive({
   username: 'admin',
-  password: 'admin123'
+  password: ''
 })
 
 async function handleLogin() {
@@ -43,6 +43,8 @@ async function handleLogin() {
     await authStore.login(form)
     ElMessage.success('登录成功')
     router.push('/')
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || '登录失败，请检查用户名和密码')
   } finally {
     loading.value = false
   }
