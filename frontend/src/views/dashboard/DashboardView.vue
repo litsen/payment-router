@@ -1,5 +1,26 @@
 <template>
   <div v-loading="loading" class="dashboard-page">
+    <section class="dashboard-toolbar">
+      <div>
+        <h2>交易数据看板</h2>
+        <span>{{ selectedRangeLabel }}</span>
+      </div>
+      <div class="dashboard-filters">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          value-format="YYYY-MM-DD"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          :clearable="false"
+          :disabled-date="disabledDate"
+        />
+        <el-button class="dashboard-query-button" type="primary" :icon="DataAnalysis" @click="loadDashboard">查询</el-button>
+        <el-button :icon="RefreshRight" @click="resetToday">今日</el-button>
+      </div>
+    </section>
+
     <div class="metric-grid">
       <div v-for="item in metrics" :key="item.label" class="metric-card" :class="item.tone">
         <div class="metric-content">
@@ -14,7 +35,7 @@
 
     <div class="chart-grid">
       <section class="chart-panel">
-        <header>最近 24 小时交易趋势</header>
+        <header>{{ trendTitle }}</header>
         <div ref="trendChartRef" class="chart-box"></div>
       </section>
       <section class="chart-panel">
@@ -61,10 +82,12 @@ import {
   type StatusDistributionItem
 } from '@/api/dashboard'
 import type { ApiResult } from '@/api/auth'
+import { ElMessage } from 'element-plus'
 
 use([BarChart, LineChart, PieChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
 
 const loading = ref(false)
+const dateRange = ref<[string, string]>([formatDate(new Date()), formatDate(new Date())])
 const summary = ref<DashboardSummary>({
   todayAmount: 0,
   todayOrderCount: 0,
@@ -89,15 +112,25 @@ let rateChart: ECharts | undefined
 let statusChart: ECharts | undefined
 
 const metrics = computed(() => [
-  { label: '今日交易金额', value: formatMoney(summary.value.todayAmount), icon: Wallet, tone: 'metric-purple' },
-  { label: '今日交易笔数', value: summary.value.todayOrderCount, icon: CreditCard, tone: 'metric-blue' },
-  { label: '今日成功笔数', value: summary.value.todaySuccessCount, icon: CircleCheck, tone: 'metric-blue' },
-  { label: '今日失败笔数', value: summary.value.todayFailedCount, icon: CircleClose, tone: 'metric-pink' },
-  { label: '今日成功率', value: `${summary.value.todaySuccessRate}%`, icon: TrendCharts, tone: 'metric-cyan' },
-  { label: '今日 UNKNOWN 订单数', value: summary.value.todayUnknownCount, icon: RefreshRight, tone: 'metric-blue' },
+  { label: '区间交易金额', value: formatMoney(summary.value.todayAmount), icon: Wallet, tone: 'metric-purple' },
+  { label: '区间交易笔数', value: summary.value.todayOrderCount, icon: CreditCard, tone: 'metric-blue' },
+  { label: '区间成功笔数', value: summary.value.todaySuccessCount, icon: CircleCheck, tone: 'metric-blue' },
+  { label: '区间失败笔数', value: summary.value.todayFailedCount, icon: CircleClose, tone: 'metric-pink' },
+  { label: '区间成功率', value: `${summary.value.todaySuccessRate}%`, icon: TrendCharts, tone: 'metric-cyan' },
+  { label: '区间 UNKNOWN 订单数', value: summary.value.todayUnknownCount, icon: RefreshRight, tone: 'metric-blue' },
   { label: '当前可用商户号数量', value: summary.value.availableAccountCount, icon: UserFilled, tone: 'metric-blue' },
   { label: '当前熔断商户号数量', value: summary.value.circuitBrokenAccountCount, icon: SwitchButton, tone: 'metric-muted' }
 ])
+
+const selectedRangeLabel = computed(() => {
+  const [startDate, endDate] = dateRange.value
+  return startDate === endDate ? `${startDate} 数据` : `${startDate} 至 ${endDate} 数据`
+})
+
+const trendTitle = computed(() => {
+  const [startDate, endDate] = dateRange.value
+  return daysBetween(startDate, endDate) > 2 ? '交易趋势（按日）' : '交易趋势（按小时）'
+})
 
 onMounted(async () => {
   await loadDashboard()
@@ -113,13 +146,18 @@ onBeforeUnmount(() => {
 })
 
 async function loadDashboard() {
+  if (daysBetween(dateRange.value[0], dateRange.value[1]) > 31) {
+    ElMessage.warning('首页看板最多支持查询 31 天数据')
+    return
+  }
   loading.value = true
   try {
+    const params = dashboardParams()
     const [summaryRes, trendRes, accountRes, statusRes] = await Promise.all([
-      getDashboardSummary(),
-      getHourlyTrend(),
-      getAccountStats(),
-      getStatusDistribution()
+      getDashboardSummary(params),
+      getHourlyTrend(params),
+      getAccountStats(params),
+      getStatusDistribution(params)
     ])
     summary.value = (summaryRes as unknown as ApiResult<DashboardSummary>).data
     hourlyTrend.value = (trendRes as unknown as ApiResult<HourlyTrendItem[]>).data
@@ -130,6 +168,21 @@ async function loadDashboard() {
   } finally {
     loading.value = false
   }
+}
+
+function dashboardParams() {
+  const [startDate, endDate] = dateRange.value
+  return { startDate, endDate }
+}
+
+function resetToday() {
+  const today = formatDate(new Date())
+  dateRange.value = [today, today]
+  loadDashboard()
+}
+
+function disabledDate(date: Date) {
+  return date.getTime() > Date.now()
 }
 
 function renderCharts() {
@@ -321,5 +374,18 @@ function resizeCharts() {
 
 function formatMoney(value: number) {
   return `￥${Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function formatDate(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function daysBetween(startDate: string, endDate: string) {
+  const start = new Date(`${startDate}T00:00:00`).getTime()
+  const end = new Date(`${endDate}T00:00:00`).getTime()
+  return Math.floor((end - start) / 86_400_000) + 1
 }
 </script>

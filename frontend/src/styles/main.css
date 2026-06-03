@@ -227,6 +227,50 @@ body {
     linear-gradient(180deg, #f6f8ff 0%, #f2f6ff 100%);
 }
 
+.dashboard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 255, 0.92);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(71, 85, 133, 0.08);
+}
+
+.dashboard-toolbar h2 {
+  margin: 0 0 6px;
+  color: #25304d;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.dashboard-toolbar span {
+  color: #697895;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-filters {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dashboard-query-button,
+.dashboard-query-button:hover,
+.dashboard-query-button:focus {
+  color: #ffffff;
+}
+
+.dashboard-query-button span,
+.dashboard-query-button .el-icon {
+  color: #ffffff;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -461,6 +505,15 @@ body {
 
   .route-test-layout {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-filters {
+    justify-content: flex-start;
   }
 
   .metric-grid,

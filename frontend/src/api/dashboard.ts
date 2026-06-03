@@ -39,18 +39,23 @@ export interface StatusDistributionItem {
   amount: number
 }
 
-export function getDashboardSummary() {
-  return http.get<ApiResult<DashboardSummary>>('/admin/dashboard/summary')
+export interface DashboardDateRangeParams {
+  startDate?: string
+  endDate?: string
 }
 
-export function getHourlyTrend() {
-  return http.get<ApiResult<HourlyTrendItem[]>>('/admin/dashboard/hourly-trend')
+export function getDashboardSummary(params?: DashboardDateRangeParams) {
+  return http.get<ApiResult<DashboardSummary>>('/admin/dashboard/summary', { params })
 }
 
-export function getAccountStats() {
-  return http.get<ApiResult<AccountStatsItem[]>>('/admin/dashboard/account-stats')
+export function getHourlyTrend(params?: DashboardDateRangeParams) {
+  return http.get<ApiResult<HourlyTrendItem[]>>('/admin/dashboard/hourly-trend', { params })
 }
 
-export function getStatusDistribution() {
-  return http.get<ApiResult<StatusDistributionItem[]>>('/admin/dashboard/status-distribution')
+export function getAccountStats(params?: DashboardDateRangeParams) {
+  return http.get<ApiResult<AccountStatsItem[]>>('/admin/dashboard/account-stats', { params })
+}
+
+export function getStatusDistribution(params?: DashboardDateRangeParams) {
+  return http.get<ApiResult<StatusDistributionItem[]>>('/admin/dashboard/status-distribution', { params })
 }
