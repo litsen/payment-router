@@ -7,7 +7,7 @@
       </div>
       <el-form :model="form" label-position="top" @submit.prevent="handleLogin">
         <el-form-item label="用户名">
-          <el-input v-model="form.username" placeholder="admin" @blur="refreshLoginStatus" />
+          <el-input v-model="form.username" placeholder="请输入用户名" @blur="refreshLoginStatus" />
         </el-form-item>
         <el-form-item label="密码">
           <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password @keyup.enter="handleLogin" />
@@ -47,7 +47,7 @@ const loginBackgroundStyle = computed(() => ({
 }))
 const loading = ref(false)
 const form = reactive({
-  username: 'admin',
+  username: '',
   password: '',
   captchaId: '',
   captchaCode: ''
