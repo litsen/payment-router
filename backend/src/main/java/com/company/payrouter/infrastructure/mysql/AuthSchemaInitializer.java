@@ -508,11 +508,38 @@ public class AuthSchemaInitializer implements ApplicationRunner {
         insertPayMethod("H5_PAY", "H5/链接跳转支付", false, 30, "LFWin /payapi/pay/jspay3");
         insertPayMethod("WECHAT_JSAPI_PAY", "微信公众号和小程序支付", false, 40, "LFWin /payapi/mini/wxpay");
         insertPayMethod("ALIPAY_JSAPI_PAY", "支付宝生活号和小程序支付", false, 50, "LFWin /payapi/trade/alipay");
-        jdbcTemplate.update("UPDATE pay_method SET method_name = ?, remark = ? WHERE method_code = ?", "条码支付：商户扫顾客付款码", "LFWin /payapi/pay/barcode", "BARCODE_PAY");
-        jdbcTemplate.update("UPDATE pay_method SET method_name = ?, remark = ? WHERE method_code = ?", "聚合扫码支付接口", "LFWin /payapi/trans/kxpay service=pay.comm.jspay", "SCAN_PAY");
-        jdbcTemplate.update("UPDATE pay_method SET method_name = ?, remark = ? WHERE method_code = ?", "扫码支付接口", "LFWin /payapi/pay/qrcode service=pay.alipay.qrcode/pay.wxpay.qrcode/pay.unpay.qrcode", "QRCODE_PAY");
-        jdbcTemplate.update("UPDATE pay_method SET method_name = ?, remark = ? WHERE method_code = ?", "H5/链接跳转支付", "LFWin /payapi/pay/jspay3", "H5_PAY");
-        jdbcTemplate.update("UPDATE pay_method SET method_name = ?, remark = ? WHERE method_code = ?", "微信公众号和小程序支付（旧编码，建议改用 WECHAT_JSAPI_PAY）", "Legacy alias", "JSAPI_PAY");
+        repairPayMethod("PRE_ORDER", "统一收银台", "LFWin /index/Payment/pre_order");
+        repairPayMethod("BARCODE_PAY", "条码支付：商户扫顾客付款码", "LFWin /payapi/pay/barcode");
+        repairPayMethod("DECODE_BAR", "条码支付前解码", "LFWin /payapi/pay/decode_bar");
+        repairPayMethod("SCAN_PAY", "聚合扫码支付接口", "LFWin /payapi/trans/kxpay service=pay.comm.jspay");
+        repairPayMethod("QRCODE_PAY", "扫码支付接口", "LFWin /payapi/pay/qrcode service=pay.alipay.qrcode/pay.wxpay.qrcode/pay.unpay.qrcode");
+        repairPayMethod("H5_PAY", "H5/链接跳转支付", "LFWin /payapi/pay/jspay3");
+        repairPayMethod("WECHAT_JSAPI_PAY", "微信公众号和小程序支付", "LFWin /payapi/mini/wxpay");
+        repairPayMethod("ALIPAY_JSAPI_PAY", "支付宝生活号和小程序支付", "LFWin /payapi/trade/alipay");
+        repairPayMethod("JSAPI_PAY", "微信公众号和小程序支付（旧编码，建议改用 WECHAT_JSAPI_PAY）", "Legacy alias");
+    }
+
+    private void repairPayMethod(String code, String name, String remark) {
+        jdbcTemplate.update("""
+                UPDATE pay_method
+                SET method_name = ?, remark = ?
+                WHERE method_code = ?
+                  AND (
+                      method_name IS NULL
+                      OR method_name = ''
+                      OR method_name LIKE '%ä%'
+                      OR method_name LIKE '%å%'
+                      OR method_name LIKE '%æ%'
+                      OR method_name LIKE '%ç%'
+                      OR method_name LIKE '%鏀%'
+                      OR method_name LIKE '%璺%'
+                      OR method_name LIKE '%鍚%'
+                      OR method_name LIKE '%漏%'
+                      OR method_name LIKE '%鍏%'
+                      OR method_name LIKE '%鐮%'
+                      OR method_name LIKE '%寰%'
+                  )
+                """, name, remark, code);
     }
 
     private void seedDefaultMerchantApps() {
@@ -559,6 +586,29 @@ public class AuthSchemaInitializer implements ApplicationRunner {
         insertSetting("logoUrl", "/brand/logo.png");
         insertSetting("loginBackgroundUrl", "/brand/login-bg.png");
         insertSetting("faviconUrl", "/brand/logo.png");
+        repairDefaultSetting("siteName", "支付路由后台");
+        repairDefaultSetting("copyrightText", "Copyright © xxx公司");
+    }
+
+    private void repairDefaultSetting(String key, String value) {
+        jdbcTemplate.update("""
+                UPDATE sys_setting
+                SET setting_value = ?
+                WHERE setting_key = ?
+                  AND (
+                      setting_value IS NULL
+                      OR setting_value = ''
+                      OR setting_value LIKE '%ä%'
+                      OR setting_value LIKE '%å%'
+                      OR setting_value LIKE '%æ%'
+                      OR setting_value LIKE '%ç%'
+                      OR setting_value LIKE '%鏀%'
+                      OR setting_value LIKE '%璺%'
+                      OR setting_value LIKE '%鍚%'
+                      OR setting_value LIKE '%漏%'
+                      OR setting_value LIKE '%鍏%'
+                  )
+                """, value, key);
     }
 
     private void seedAdminUser() {
