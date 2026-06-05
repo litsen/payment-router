@@ -24,6 +24,7 @@ frontend/vite.config.d.ts
 
 deploy/mysql-data/
 deploy/redis-data/
+deploy/backups/
 deploy/logs/
 deploy/uploads/
 deploy/.env
