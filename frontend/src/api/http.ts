@@ -19,6 +19,9 @@ http.interceptors.response.use(
   error => {
     const status = error.response?.status
     if (status === 401) {
+      if (error.config?.url === '/api/system-settings') {
+        return Promise.reject(error)
+      }
       localStorage.removeItem('payment-router-token')
       if (location.pathname !== '/login') {
         location.href = '/login'

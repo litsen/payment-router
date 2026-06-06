@@ -12,6 +12,12 @@ const router = createRouter({
       meta: { title: '登录', public: true }
     },
     {
+      path: '/landing',
+      name: 'Landing',
+      component: () => import('@/views/landing/LandingView.vue'),
+      meta: { title: 'Payment Router', public: true }
+    },
+    {
       path: '/docs',
       redirect: '/docs/barcode-pay'
     },
