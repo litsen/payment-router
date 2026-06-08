@@ -500,22 +500,22 @@ public class AuthSchemaInitializer implements ApplicationRunner {
     }
 
     private void seedPayMethods() {
-        insertPayMethod("PRE_ORDER", "统一收银台", false, 5, "LFWin /index/Payment/pre_order");
-        insertPayMethod("BARCODE_PAY", "条码支付：商户扫顾客付款码", true, 10, "LFWin /payapi/pay/barcode");
-        insertPayMethod("DECODE_BAR", "条码支付前解码", false, 15, "LFWin /payapi/pay/decode_bar");
-        insertPayMethod("SCAN_PAY", "聚合扫码支付接口", false, 20, "LFWin /payapi/trans/kxpay service=pay.comm.jspay");
-        insertPayMethod("QRCODE_PAY", "扫码支付接口", false, 25, "LFWin /payapi/pay/qrcode service=pay.alipay.qrcode/pay.wxpay.qrcode/pay.unpay.qrcode");
-        insertPayMethod("H5_PAY", "H5/链接跳转支付", false, 30, "LFWin /payapi/pay/jspay3");
-        insertPayMethod("WECHAT_JSAPI_PAY", "微信公众号和小程序支付", false, 40, "LFWin /payapi/mini/wxpay");
-        insertPayMethod("ALIPAY_JSAPI_PAY", "支付宝生活号和小程序支付", false, 50, "LFWin /payapi/trade/alipay");
-        repairPayMethod("PRE_ORDER", "统一收银台", "LFWin /index/Payment/pre_order");
-        repairPayMethod("BARCODE_PAY", "条码支付：商户扫顾客付款码", "LFWin /payapi/pay/barcode");
-        repairPayMethod("DECODE_BAR", "条码支付前解码", "LFWin /payapi/pay/decode_bar");
-        repairPayMethod("SCAN_PAY", "聚合扫码支付接口", "LFWin /payapi/trans/kxpay service=pay.comm.jspay");
-        repairPayMethod("QRCODE_PAY", "扫码支付接口", "LFWin /payapi/pay/qrcode service=pay.alipay.qrcode/pay.wxpay.qrcode/pay.unpay.qrcode");
-        repairPayMethod("H5_PAY", "H5/链接跳转支付", "LFWin /payapi/pay/jspay3");
-        repairPayMethod("WECHAT_JSAPI_PAY", "微信公众号和小程序支付", "LFWin /payapi/mini/wxpay");
-        repairPayMethod("ALIPAY_JSAPI_PAY", "支付宝生活号和小程序支付", "LFWin /payapi/trade/alipay");
+        insertPayMethod("PRE_ORDER", "统一收银台", false, 5, "/index/Payment/pre_order");
+        insertPayMethod("BARCODE_PAY", "条码支付：商户扫顾客付款码", true, 10, "/payapi/pay/barcode");
+        insertPayMethod("DECODE_BAR", "条码支付前解码", false, 15, "/payapi/pay/decode_bar");
+        insertPayMethod("SCAN_PAY", "聚合扫码支付接口", false, 20, "/payapi/trans/kxpay service=pay.comm.jspay");
+        insertPayMethod("QRCODE_PAY", "扫码支付接口", false, 25, "/payapi/pay/qrcode service=pay.alipay.qrcode/pay.wxpay.qrcode/pay.unpay.qrcode");
+        insertPayMethod("H5_PAY", "H5/链接跳转支付", false, 30, "/payapi/pay/jspay3");
+        insertPayMethod("WECHAT_JSAPI_PAY", "微信公众号和小程序支付", false, 40, "/payapi/mini/wxpay");
+        insertPayMethod("ALIPAY_JSAPI_PAY", "支付宝生活号和小程序支付", false, 50, "/payapi/trade/alipay");
+        repairPayMethod("PRE_ORDER", "统一收银台", "/index/Payment/pre_order");
+        repairPayMethod("BARCODE_PAY", "条码支付：商户扫顾客付款码", "/payapi/pay/barcode");
+        repairPayMethod("DECODE_BAR", "条码支付前解码", "/payapi/pay/decode_bar");
+        repairPayMethod("SCAN_PAY", "聚合扫码支付接口", "/payapi/trans/kxpay service=pay.comm.jspay");
+        repairPayMethod("QRCODE_PAY", "扫码支付接口", "/payapi/pay/qrcode service=pay.alipay.qrcode/pay.wxpay.qrcode/pay.unpay.qrcode");
+        repairPayMethod("H5_PAY", "H5/链接跳转支付", "/payapi/pay/jspay3");
+        repairPayMethod("WECHAT_JSAPI_PAY", "微信公众号和小程序支付", "/payapi/mini/wxpay");
+        repairPayMethod("ALIPAY_JSAPI_PAY", "支付宝生活号和小程序支付", "/payapi/trade/alipay");
         repairPayMethod("JSAPI_PAY", "微信公众号和小程序支付（旧编码，建议改用 WECHAT_JSAPI_PAY）", "Legacy alias");
     }
 

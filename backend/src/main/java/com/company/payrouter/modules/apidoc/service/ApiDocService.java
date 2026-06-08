@@ -109,7 +109,7 @@ public class ApiDocService {
         register(doc(
                 "scan-pay",
                 "聚合扫码支付接口",
-                "外部商户系统创建 LFWin 聚合扫码支付订单，系统调用 /payapi/trans/kxpay，使用 service=pay.comm.jspay，返回二维码或支付链接参数。",
+                "外部商户系统创建聚合扫码支付订单，系统调用上游 /payapi/trans/kxpay，使用 service=pay.comm.jspay，返回二维码或支付链接参数。",
                 """
                         POST /api/pay/scan
                         Content-Type: application/json
@@ -136,12 +136,12 @@ public class ApiDocService {
                             }
                           }
                         }""",
-                "<p>聚合扫码支付创建成功后通常返回 PAYING，商户侧展示 payData 中的 url、qr_code 或 code_url，后续通过通知或查单确认终态。该接口固定映射 LFWin /payapi/trans/kxpay。</p>"
+                "<p>聚合扫码支付创建成功后通常返回 PAYING，商户侧展示 payData 中的 url、qr_code 或 code_url，后续通过通知或查单确认终态。该接口固定映射上游 /payapi/trans/kxpay。</p>"
         ));
         register(doc(
                 "qrcode-pay",
                 "扫码支付接口",
-                "外部商户系统创建 LFWin 指定通道扫码支付订单，系统调用 /payapi/pay/qrcode，service 必填并参与签名。",
+                "外部商户系统创建指定通道扫码支付订单，系统调用上游 /payapi/pay/qrcode，service 必填并参与签名。",
                 """
                         POST /api/pay/qrcode
                         Content-Type: application/json
@@ -242,7 +242,7 @@ public class ApiDocService {
                             }
                           }
                         }""",
-                "<p>subAppId 和 subOpenId 必填，并参与签名。该接口映射 LFWin /payapi/mini/wxpay。</p>"
+                "<p>subAppId 和 subOpenId 必填，并参与签名。该接口映射上游 /payapi/mini/wxpay。</p>"
         ));
         register(doc(
                 "alipay-jsapi-pay",
@@ -276,7 +276,7 @@ public class ApiDocService {
                             }
                           }
                         }""",
-                "<p>buyerId 和 buyerOpenId 二选一必填。subAppId 可选，传入时参与签名。该接口映射 LFWin /payapi/trade/alipay。</p>"
+                "<p>buyerId 和 buyerOpenId 二选一必填。subAppId 可选，传入时参与签名。该接口映射上游 /payapi/trade/alipay。</p>"
         ));
         register(doc(
                 "refund",
@@ -313,7 +313,7 @@ public class ApiDocService {
                             "message": "SUCCESS"
                           }
                         }""",
-                "<p>仅允许对 SUCCESS 支付订单发起退款。refundAmount 单位为元，并参与签名。merchantRefundNo、reason、notifyUrl 传入时也参与签名。退款请求会映射 LFWin /payapi/pay/refund_order。</p>"
+                "<p>仅允许对 SUCCESS 支付订单发起退款。refundAmount 单位为元，并参与签名。merchantRefundNo、reason、notifyUrl 传入时也参与签名。退款请求会映射上游 /payapi/pay/refund_order。</p>"
         ));
         register(doc(
                 "refund-query",
@@ -347,7 +347,7 @@ public class ApiDocService {
                             "message": "SUCCESS"
                           }
                         }""",
-                "<p>merchantRefundNo 可选；如果传入则参与签名。退款查询会映射 LFWin /payapi/pay/query_refund。返回状态统一为 SUCCESS、FAILED、PROCESSING。</p>"
+                "<p>merchantRefundNo 可选；如果传入则参与签名。退款查询会映射上游 /payapi/pay/query_refund。返回状态统一为 SUCCESS、FAILED、PROCESSING。</p>"
         ));
         register(doc(
                 "sign",
@@ -435,7 +435,7 @@ public class ApiDocService {
         return switch (slug) {
             case "barcode-pay" -> withCommonPayParams(param("authCode", "string", "是", "付款码，通常来自微信、支付宝或银行卡付款码。", "", "288888888888888888"));
             case "scan-pay" -> commonPayParams();
-            case "qrcode-pay" -> withCommonPayParams(param("service", "string", "是", "LFWin 指定通道扫码 service；参与签名。", "pay.alipay.qrcode, pay.wxpay.qrcode, pay.unpay.qrcode", "pay.wxpay.qrcode"));
+            case "qrcode-pay" -> withCommonPayParams(param("service", "string", "是", "指定通道扫码 service；参与签名。", "pay.alipay.qrcode, pay.wxpay.qrcode, pay.unpay.qrcode", "pay.wxpay.qrcode"));
             case "h5-pay" -> withCommonPayParams(param("returnUrl", "string", "否", "支付完成后的前端跳转地址；传入时参与签名。", "", "https://merchant.example.com/pay/success"));
             case "wechat-jsapi-pay" -> withCommonPayParams(
                     param("subAppId", "string", "是", "微信公众号或小程序 appId。", "", "wx-sub-appid"),

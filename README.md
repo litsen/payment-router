@@ -138,13 +138,7 @@ PAY_ROUTER_AES_KEY
 PAY_ROUTER_ENFORCE_PRODUCTION_SECRETS=true
 ```
 
-如果接入真实 LFWin 通道，请确认：
-
-```text
-PAY_ROUTER_CHANNEL_ADAPTER=lfwin
-PAY_ROUTER_LFWIN_BASE_URL=https://api2.lfwin.com
-PAY_ROUTER_LFWIN_TIMEOUT_SECONDS=15
-```
+如果接入真实上游通道，请按生产环境模板配置对应的通道适配器、上游地址和超时时间。
 
 如果暂时使用 Mock 通道联调：
 

@@ -11,14 +11,14 @@ CREATE TABLE IF NOT EXISTS pay_method (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT IGNORE INTO pay_method (tenant_id, method_code, method_name, enabled, sort_order, remark) VALUES
-('default', 'PRE_ORDER', '统一收银台', 0, 5, 'LFWin /index/Payment/pre_order'),
-('default', 'BARCODE_PAY', '条码支付：商户扫顾客付款码', 1, 10, 'LFWin /payapi/pay/barcode'),
-('default', 'DECODE_BAR', '条码支付前解码', 0, 15, 'LFWin /payapi/pay/decode_bar'),
-('default', 'SCAN_PAY', '聚合扫码支付接口', 0, 20, 'LFWin /payapi/trans/kxpay service=pay.comm.jspay'),
-('default', 'QRCODE_PAY', '扫码支付接口', 0, 25, 'LFWin /payapi/pay/qrcode service=pay.alipay.qrcode/pay.wxpay.qrcode/pay.unpay.qrcode'),
-('default', 'H5_PAY', 'H5/链接跳转支付', 0, 30, 'LFWin /payapi/pay/jspay3'),
-('default', 'WECHAT_JSAPI_PAY', '微信公众号和小程序支付', 0, 40, 'LFWin /payapi/mini/wxpay'),
-('default', 'ALIPAY_JSAPI_PAY', '支付宝生活号和小程序支付', 0, 50, 'LFWin /payapi/trade/alipay');
+('default', 'PRE_ORDER', '统一收银台', 0, 5, '/index/Payment/pre_order'),
+('default', 'BARCODE_PAY', '条码支付：商户扫顾客付款码', 1, 10, '/payapi/pay/barcode'),
+('default', 'DECODE_BAR', '条码支付前解码', 0, 15, '/payapi/pay/decode_bar'),
+('default', 'SCAN_PAY', '聚合扫码支付接口', 0, 20, '/payapi/trans/kxpay service=pay.comm.jspay'),
+('default', 'QRCODE_PAY', '扫码支付接口', 0, 25, '/payapi/pay/qrcode service=pay.alipay.qrcode/pay.wxpay.qrcode/pay.unpay.qrcode'),
+('default', 'H5_PAY', 'H5/链接跳转支付', 0, 30, '/payapi/pay/jspay3'),
+('default', 'WECHAT_JSAPI_PAY', '微信公众号和小程序支付', 0, 40, '/payapi/mini/wxpay'),
+('default', 'ALIPAY_JSAPI_PAY', '支付宝生活号和小程序支付', 0, 50, '/payapi/trade/alipay');
 
 INSERT IGNORE INTO sys_permission (permission_code, permission_name) VALUES
 ('paymethod:view', 'View payment methods'),

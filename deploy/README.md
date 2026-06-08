@@ -71,8 +71,6 @@ cp .env.production.example .env
 
 ```text
 PAY_ROUTER_ENFORCE_PRODUCTION_SECRETS=true
-PAY_ROUTER_CHANNEL_ADAPTER=lfwin
-PAY_ROUTER_LFWIN_BASE_URL=https://api2.lfwin.com
 ```
 
 如果暂时使用 Mock 通道联调，可保持：
@@ -115,14 +113,11 @@ docker compose down -v
 docker compose up -d
 ```
 
-## LFWin production deployment checklist
+## Production deployment checklist
 
-Before publishing a production build, copy `.env.production.example` to `.env` and replace all placeholder secrets. Confirm these values are set for the real LFWin channel:
+Before publishing a production build, copy `.env.production.example` to `.env` and replace all placeholder secrets. Confirm the real upstream channel adapter, upstream base URL, timeout, and query switch are set:
 
 ```text
-PAY_ROUTER_CHANNEL_ADAPTER=lfwin
-PAY_ROUTER_LFWIN_BASE_URL=https://api2.lfwin.com
-PAY_ROUTER_LFWIN_TIMEOUT_SECONDS=15
 PAY_QUERY_ENABLED=true
 ```
 

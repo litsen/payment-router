@@ -382,7 +382,7 @@ const customerSegments = [
     badge: 'Channel Operator',
     title: '把复杂上游接口包装成更容易卖的标准产品',
     description: '适合拥有上游通道资源、但需要更强下游联调与运维能力的团队。',
-    points: ['LFWin 真实适配已落地', 'Mock 通道便于演示和测试', '接口文档与测试工具降低联调成本'],
+    points: ['真实通道适配已落地', 'Mock 通道便于演示和测试', '接口文档与测试工具降低联调成本'],
     icon: TrendCharts
   },
   {
@@ -409,7 +409,7 @@ const simulation = reactive({
 
 const simulationResult = computed(() => {
   const fallback = !simulation.primaryAvailable || simulation.amount > 20000
-  const channel = fallback ? '备用支付参数 / Mock-LFWin-B' : '主支付参数 / LFWin-A'
+  const channel = fallback ? '备用支付参数 / Mock-B' : '主支付参数 / Channel-A'
   const status = fallback ? '已切换备用路径' : '主路径命中'
   const limit = simulation.limitReservation ? '预占成功，等待支付结果确认' : '仅记录限额流水'
   return {

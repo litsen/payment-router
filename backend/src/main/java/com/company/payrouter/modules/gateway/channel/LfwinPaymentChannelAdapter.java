@@ -228,7 +228,7 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
 
     private ChannelResponse call(String path, Map<String, String> params, String signKey) {
         if (!StringUtils.hasText(signKey)) {
-            throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "LFWin signKey is not configured");
+            throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "Channel signKey is not configured");
         }
         params.put("sign", signHelper.md5Sign(params, signKey));
         String responseBody = postForm(path, params);
@@ -240,7 +240,7 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
 
     private ChannelResponse callRefund(String path, Map<String, String> params, String signKey) {
         if (!StringUtils.hasText(signKey)) {
-            throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "LFWin signKey is not configured");
+            throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "Channel signKey is not configured");
         }
         params.put("sign", signHelper.md5Sign(params, signKey));
         String responseBody = postForm(path, params);
@@ -260,13 +260,13 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "LFWin HTTP request failed: " + response.statusCode());
+                throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "Channel HTTP request failed: " + response.statusCode());
             }
             return response.body();
         } catch (BizException exception) {
             throw exception;
         } catch (Exception exception) {
-            throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "LFWin HTTP request failed: " + exception.getMessage());
+            throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "Channel HTTP request failed: " + exception.getMessage());
         }
     }
 
@@ -293,7 +293,7 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
                 }
             }
             if (values.isEmpty()) {
-                throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "LFWin response is not JSON or form data");
+                throw new BizException(BusinessErrorCode.CHANNEL_ERROR, "Channel response is not JSON or form data");
             }
             return values;
         }
@@ -324,7 +324,7 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
                 flattenFirstObject(parsed.path("lists"), flat);
             }
         } catch (Exception ignored) {
-            // LFWin may also return a plain payment URL in data.
+            // The upstream may also return a plain payment URL in data.
         }
     }
 
@@ -335,7 +335,7 @@ public class LfwinPaymentChannelAdapter implements PaymentChannelAdapter {
         }
         boolean verified = signHelper.verifyMd5(values, signKey);
         if (!verified && !hasPaymentPayload(values) && !hasRefundPayload(values)) {
-            throw new ChannelException("LFWin response sign verification failed", rawResponse);
+            throw new ChannelException("Channel response sign verification failed", rawResponse);
         }
         return verified;
     }
