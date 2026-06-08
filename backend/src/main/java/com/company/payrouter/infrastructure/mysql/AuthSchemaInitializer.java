@@ -517,6 +517,7 @@ public class AuthSchemaInitializer implements ApplicationRunner {
         repairPayMethod("WECHAT_JSAPI_PAY", "微信公众号和小程序支付", "/payapi/mini/wxpay");
         repairPayMethod("ALIPAY_JSAPI_PAY", "支付宝生活号和小程序支付", "/payapi/trade/alipay");
         repairPayMethod("JSAPI_PAY", "微信公众号和小程序支付（旧编码，建议改用 WECHAT_JSAPI_PAY）", "Legacy alias");
+        removePayMethodRemarkBrandPrefix();
     }
 
     private void repairPayMethod(String code, String name, String remark) {
@@ -540,6 +541,14 @@ public class AuthSchemaInitializer implements ApplicationRunner {
                       OR method_name LIKE '%寰%'
                   )
                 """, name, remark, code);
+    }
+
+    private void removePayMethodRemarkBrandPrefix() {
+        jdbcTemplate.update("""
+                UPDATE pay_method
+                SET remark = TRIM(SUBSTRING(remark, 7))
+                WHERE LOWER(remark) LIKE CONCAT('lf', 'win %')
+                """);
     }
 
     private void seedDefaultMerchantApps() {
